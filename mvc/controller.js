@@ -59,12 +59,13 @@ Controller.prototype.createItem = function (key, value, onChange) {
   this._view.handles.push({ handle: handle, keyFrom: keyPrev, keyTo: key });
 
   return {
+    key: key,
     line: line,
     handle: handle,
   }
 }
 
-Controller.prototype.divideIntoEqualParts = function () {
+Controller.prototype.divideSliderIntoEqualParts = function () {
   var keys = Object.keys(this._model.items);
   var amount = keys.length;
   var diffs = this._model.getEqualParts(amount);
@@ -76,4 +77,22 @@ Controller.prototype.divideIntoEqualParts = function () {
       .reduce(function (acc, curr) { return acc + curr }, 0);
     this._view.setLineWidth(key, aggregate);
   }, this);
+}
+
+Controller.prototype.addItemToSlider = function (value, item) {
+  var _this = this;
+  var aggregation = Object.keys(this._model.items).reduce(function (acc, curr) {
+    var current = _this._model.items[item.key] === curr;
+    return current ? acc : acc + _this._model.items[curr].value;
+  }, 0);
+
+  this._view.setLineWidth(item.key, aggregation);
+  this._view.appendItem(item.handle);
+  this._view.appendItem(item.line);
+}
+
+Controller.prototype.addItemToSliderAuto = function (item) {
+  this.divideSliderIntoEqualParts();
+  this._view.appendItem(item.handle);
+  this._view.appendItem(item.line);
 }
