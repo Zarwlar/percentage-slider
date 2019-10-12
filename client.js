@@ -1,2 +1,3 @@
 var node = document.getElementById('slider-root');
-new Slider(node);
+const slider = new Slider(node);
+slider.addItem('props')
