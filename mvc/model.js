@@ -18,3 +18,16 @@ Model.prototype.getEqualParts = function (n) {
   }
   return values;
 }
+
+Model.prototype.getSumOfItems = function () {
+  var _this = this;
+  return Object.keys(this.items).reduce(function (acc, item) {
+    var currValue = _this.items[item].value;
+    return isNaN(currValue) ? acc : acc + currValue;
+  }, 0);
+}
+
+Model.prototype.isValidValue = function (value) {
+  var value = isNaN(value) ? 0 : value;
+  return this.getSumOfItems() + value <= this.total;
+}

@@ -3,90 +3,80 @@ function Controller(model, view) {
   this._view = view;
 }
 
-Controller.prototype.createSingleItem = function (key, value, onChange) {
-  if (!key || key.trim() === '') {
-    throw new Error('Key must be provided!');
+Controller.prototype.createSingleItem = function (name, value, onChange) {
+  if (!name || name.trim() === '') {
+    throw new Error('Name must be provided!');
   }
 
-  var line = this._view.createLine(key, value);
-  this._view.items[key] = {
-    name: key,
+  var line = this._view.createLine(name, value);
+  this._view.items[name] = {
+    name: name,
     line: line,
     onChange: onChange,
     _next: null,
     _previous: null,
   };
 
-  this._view.setLineWidth(key, value);
+  this._view.setLineWidth(name, value);
 
-  this._model.items[key] = {
-    name: key,
+  this._model.items[name] = {
+    name: name,
     value: value,
   };
 
   return line;
 }
 
-Controller.prototype.createItem = function (key, value, onChange) {
-  var line = this._view.createLine(key, value);
+Controller.prototype.createItem = function (name, value, onChange) {
+  var line = this._view.createLine(name, value);
+  var namePrev = this._view.getLastItem();
 
-  var keysPrev = Object.keys(this._view.items).filter(function (item) {
-    return this._view.items[item]._next === null;
-  }, this);
-
-  if (keysPrev.length !== 1) {
-    throw new Error('Error when trying to find last item');
-  }
-
-  var keyPrev = keysPrev[0];
-
-  this._model.items[key] = {
-    name: key,
+  this._model.items[name] = {
+    name: name,
     value: value,
   };
 
-  this._view.items[key] = {
-    name: key,
+  this._view.items[name] = {
+    name: name,
     line: line,
     onChange: onChange,
-    _previous: this._view[keyPrev],
+    _previous: this._view.items[namePrev],
     _next: null,
   };
 
-  this._view.items[keyPrev]._next = this._view.items[key];
+  this._view.items[namePrev]._next = this._view.items[name];
 
   var handle = this._view.createHandle();
-  this._view.handles.push({ handle: handle, keyFrom: keyPrev, keyTo: key });
+  this._view.handles.push({ handle: handle, nameFrom: namePrev, nameTo: name });
 
   return {
-    key: key,
+    name: name,
     line: line,
     handle: handle,
   }
 }
 
 Controller.prototype.divideSliderIntoEqualParts = function () {
-  var keys = Object.keys(this._model.items);
-  var amount = keys.length;
+  var names = Object.keys(this._model.items);
+  var amount = names.length;
   var diffs = this._model.getEqualParts(amount);
 
-  keys.forEach(function (key, index) {
-    this._model.items[key].value = diffs[index];
+  names.forEach(function (name, index) {
+    this._model.items[name].value = diffs[index];
     var aggregate = diffs
       .slice(0, index + 1)
       .reduce(function (acc, curr) { return acc + curr }, 0);
-    this._view.setLineWidth(key, aggregate);
+    this._view.setLineWidth(name, aggregate);
   }, this);
 }
 
 Controller.prototype.addItemToSlider = function (value, item) {
   var _this = this;
   var aggregation = Object.keys(this._model.items).reduce(function (acc, curr) {
-    var current = _this._model.items[item.key] === curr;
-    return current ? acc : acc + _this._model.items[curr].value;
+    return acc + _this._model.items[curr].value;
   }, 0);
 
-  this._view.setLineWidth(item.key, aggregation);
+  this._view.setLineWidth(item.name, aggregation);
   this._view.appendItem(item.handle);
   this._view.appendItem(item.line);
 }
@@ -95,4 +85,27 @@ Controller.prototype.addItemToSliderAuto = function (item) {
   this.divideSliderIntoEqualParts();
   this._view.appendItem(item.handle);
   this._view.appendItem(item.line);
+}
+
+Controller.prototype.addItemToSliderGreedy = function (item) {
+  var emptySpace = this._model.total - this._model.getSumOfItems();
+  this._model.items[item.name].value = emptySpace;
+  this._view.setLineWidth(item.name, this._model.total);
+  this._view.appendItem(item.handle);
+  this._view.appendItem(item.line);
+}
+
+Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
+  console.log('addItemToSliderBySplitLastItem');
+
+  var prevItem = this._view.items[item.name]._previous;
+  var prevItemValue = this._model.items[prevItem.name].value;
+
+  var floorValue = Math.floor(prevItemValue / 2);
+  var ceilValue = Math.ceil(prevItemValue / 2);
+
+  prevItem.line.style.width = prevItem.line.style.width - this._view.fromPercentToPixels(floorValue);
+  this._model.items[item.name].value = ceilValue;
+  this._model.items[prevItem.name].value = ceilValue;
+  this.addItemToSlider(ceilValue, item);
 }
