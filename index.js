@@ -10,13 +10,14 @@ function Controller(model, view) {
 Controller.prototype.addSingleItem = function (key, value, onChange) {
   var line = this._view.createLine(key, value);
   this._view.appendItem(line);
+  this._view.setLineWidth(line, value);
   this._model.items[key] = {
     value: value,
     line: line,
     onChange: onChange,
     next: null,
     previous: null,
-  }
+  };
 }
 
 function View(node) {
@@ -39,6 +40,10 @@ View.prototype.createLine = function (key, value, onChange) {
 
 View.prototype.appendItem = function (item) {
   this.slider.appendChild(item);
+}
+
+View.prototype.setLineWidth = function (line, value) {
+  line.style.width = value + '%';
 }
 
 
