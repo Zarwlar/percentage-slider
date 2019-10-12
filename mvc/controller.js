@@ -63,11 +63,22 @@ Controller.prototype.divideSliderIntoEqualParts = function () {
 
   names.forEach(function (name, index) {
     this._model.items[name].value = diffs[index];
+
     var aggregate = diffs
       .slice(0, index + 1)
       .reduce(function (acc, curr) { return acc + curr }, 0);
     this._view.setLineWidth(name, aggregate);
   }, this);
+
+  this._view.handles.forEach(function (handleData) {
+    var item = {
+      handle: handleData.handle,
+      name: handleData.nameTo,
+    };
+
+    this.bindHandle(item);
+  }, this);
+
 }
 
 Controller.prototype.addItemToSlider = function (value, item) {
@@ -76,8 +87,9 @@ Controller.prototype.addItemToSlider = function (value, item) {
     return acc + _this._model.items[curr].value;
   }, 0);
 
-  this._view.setLineWidth(item.name, aggregation > 100 ? 100 : aggregation);
+  this._view.setLineWidth(item.name, aggregation);
   this._view.appendItem(item.handle);
+  this.bindHandle(item);
   this._view.appendItem(item.line);
 }
 
@@ -92,6 +104,7 @@ Controller.prototype.addItemToSliderGreedy = function (item) {
   this._model.items[item.name].value = emptySpace;
   this._view.setLineWidth(item.name, this._model.total);
   this._view.appendItem(item.handle);
+  this.bindHandle(item);
   this._view.appendItem(item.line);
 }
 
@@ -107,4 +120,11 @@ Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
   this._model.items[item.name].value = newItemValue;
   this._model.items[prevItem.name].value = newPrevItemValue;
   this.addItemToSlider(newItemValue, item);
+}
+
+Controller.prototype.bindHandle = function (item) {
+  var handle = item.handle;
+  var prevItem = this._view.items[item.name]._previous;
+
+  handle.style.left = Math.round(this._view.getPercentOf(prevItem.name)) + '%';
 }

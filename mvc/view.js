@@ -53,3 +53,9 @@ View.createSlider = function () {
   slider.setAttribute('name', 'slider_' + ++View.ids);
   return slider;
 }
+
+View.prototype.getPercentOf = function (name) {
+  var totalPercent = this.slider.offsetWidth;
+  var particularLineWidth = this.items[name].line.offsetWidth;
+  return (particularLineWidth * 100) / totalPercent;
+}

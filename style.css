@@ -18,7 +18,8 @@
 }
 
 .handle {
-  width: 5px;
+  width: 4px;
+  border: 1px solid black;
   height: 25px;
   border-radius: 3px;
   position: absolute;

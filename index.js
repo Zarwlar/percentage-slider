@@ -30,6 +30,7 @@ Slider.prototype.addItem = function (name, value, onChange) {
 
   if (!isNaN(value)) {
     this._wasChanged = true;
+
     this._controller.addItemToSlider(value, item);
     return;
   }
