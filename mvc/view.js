@@ -55,7 +55,47 @@ View.createSlider = function () {
 }
 
 View.prototype.getPercentOf = function (name) {
-  var totalPercent = this.slider.offsetWidth;
   var particularLineWidth = this.items[name].line.offsetWidth;
-  return (particularLineWidth * 100) / totalPercent;
+  return this.convertToPercent(particularLineWidth);
+}
+
+View.prototype.convertToPercent = function (value) {
+  var totalPercent = this.slider.offsetWidth;
+  return (value * 100) / totalPercent;
+}
+
+View.prototype.makeHandleMoveable = function (handle) {
+  var _this = this;
+  handle.onmousedown = function (event) {
+    event.preventDefault();
+
+    var shiftX = event.clientX - handle.getBoundingClientRect().left;
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    function onMouseMove(event) {
+      var newLeft = event.clientX - shiftX - _this.slider.getBoundingClientRect().left;
+
+      if (newLeft < 0) {
+        newLeft = 0;
+      }
+      var rightEdge = _this.slider.offsetWidth - handle.offsetWidth;
+      if (newLeft > rightEdge) {
+        newLeft = rightEdge;
+      }
+
+      handle.style.left = Math.round(_this.convertToPercent(newLeft)) + '%';
+    }
+
+    function onMouseUp() {
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+    }
+
+  };
+
+  handle.ondragstart = function () {
+    return false;
+  };
 }

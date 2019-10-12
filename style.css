@@ -19,7 +19,7 @@
 
 .handle {
   width: 4px;
-  border: 1px solid black;
+  border: 1px solid white;
   height: 25px;
   border-radius: 3px;
   position: absolute;

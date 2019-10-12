@@ -127,4 +127,5 @@ Controller.prototype.bindHandle = function (item) {
   var prevItem = this._view.items[item.name]._previous;
 
   handle.style.left = Math.round(this._view.getPercentOf(prevItem.name)) + '%';
+  this._view.makeHandleMoveable(handle);
 }
