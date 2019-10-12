@@ -2,6 +2,8 @@ function View(node) {
   this.node = node;
   this.slider = View.createSlider();
   this.lineIds = 0;
+  this.items = {};
+  this.handles = [];
   this.node.appendChild(this.slider, this.node.nextSibling);
 }
 
@@ -16,6 +18,14 @@ View.prototype.createLine = function (key, value, onChange) {
   return line;
 }
 
+View.prototype.createHandle = function () {
+  var handle = document.createElement('div');
+
+  handle.classList.add('handle');
+
+  return handle;
+}
+
 View.prototype.appendItem = function (item) {
   this.slider.appendChild(item);
 }
@@ -23,7 +33,6 @@ View.prototype.appendItem = function (item) {
 View.prototype.setLineWidth = function (line, value) {
   line.style.width = value + '%';
 }
-
 
 View.ids = 0;
 View.createSlider = function () {

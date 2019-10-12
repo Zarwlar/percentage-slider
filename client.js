@@ -7,7 +7,7 @@ const slider = new Slider(node);
 
 addItemBtn.addEventListener('click', function () {
   var name = itemNameInput.value;
-  var value = Number.parseInt(itemNameInput.value) || undefined;
+  var value = Number.parseInt(itemValueInput.value, 10);
 
   slider.addItem(name, value);
 })
