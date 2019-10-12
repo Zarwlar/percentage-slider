@@ -31,3 +31,7 @@ Model.prototype.isValidValue = function (value) {
   var value = isNaN(value) ? 0 : value;
   return this.getSumOfItems() + value <= this.total;
 }
+
+Model.prototype.hasNoItems = function () {
+  return Object.keys(this.items).length === 0;
+}

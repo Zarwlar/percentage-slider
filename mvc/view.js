@@ -26,11 +26,6 @@ View.prototype.createHandle = function () {
   return handle;
 }
 
-View.prototype.fromPercentToPixels = function (percent) {
-  var pixelPerPercent = this.slider.offsetWidth / 100;
-  return pixelPerPercent * percent;
-}
-
 View.prototype.getLastItem = function () {
   var namesPrev = Object.keys(this.items).filter(function (item) {
     return this.items[item]._next === null;

@@ -76,7 +76,7 @@ Controller.prototype.addItemToSlider = function (value, item) {
     return acc + _this._model.items[curr].value;
   }, 0);
 
-  this._view.setLineWidth(item.name, aggregation);
+  this._view.setLineWidth(item.name, aggregation > 100 ? 100 : aggregation);
   this._view.appendItem(item.handle);
   this._view.appendItem(item.line);
 }
@@ -96,16 +96,15 @@ Controller.prototype.addItemToSliderGreedy = function (item) {
 }
 
 Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
-  console.log('addItemToSliderBySplitLastItem');
-
   var prevItem = this._view.items[item.name]._previous;
   var prevItemValue = this._model.items[prevItem.name].value;
 
-  var floorValue = Math.floor(prevItemValue / 2);
-  var ceilValue = Math.ceil(prevItemValue / 2);
+  var newPrevItemValue = Math.floor(prevItemValue / 2);
+  var newItemValue = Math.ceil(prevItemValue / 2);
 
-  prevItem.line.style.width = prevItem.line.style.width - this._view.fromPercentToPixels(floorValue);
-  this._model.items[item.name].value = ceilValue;
-  this._model.items[prevItem.name].value = ceilValue;
-  this.addItemToSlider(ceilValue, item);
+  prevItem.line.style.width = Number.parseInt(prevItem.line.style.width) - newItemValue + '%';
+
+  this._model.items[item.name].value = newItemValue;
+  this._model.items[prevItem.name].value = newPrevItemValue;
+  this.addItemToSlider(newItemValue, item);
 }

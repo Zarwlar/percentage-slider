@@ -14,11 +14,15 @@ Slider.prototype.addItem = function (name, value, onChange) {
     throw new Error("Total can't be greater than " + this._model.total);
   }
 
-  var isEmptySlider = Object.keys(this._model.items).length === 0;
-  if (isEmptySlider) {
-    var _value = Number.parseInt(value, 10) || this._model.total;
-    var item = this._controller.createSingleItem(name, _value, onChange);
+  if (this._model.hasNoItems()) {
+    var validValue = Number.parseInt(value, 10) || this._model.total;
+    var item = this._controller.createSingleItem(name, validValue, onChange);
     this._view.appendItem(item);
+
+    if (!isNaN(value)) {
+      this._wasChanged = true;
+    }
+
     return;
   }
 
@@ -31,8 +35,8 @@ Slider.prototype.addItem = function (name, value, onChange) {
   }
 
   if (this._wasChanged) {
-    var isNoSpaceLeft = this._model.getSumOfItems() === this._model.total;
-    if (isNoSpaceLeft) {
+    var noSpaceLeft = this._model.getSumOfItems() === this._model.total;
+    if (noSpaceLeft) {
       this._controller.addItemToSliderBySplitLastItem(item);
     } else {
       this._controller.addItemToSliderGreedy(item);
