@@ -21,8 +21,7 @@
   width: 5px;
   height: 25px;
   border-radius: 3px;
-  /* left: 100%; */
-  position: relative;
+  position: absolute;
   top: -5px;
   background: darkgray;
   cursor: pointer;

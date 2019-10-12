@@ -27,11 +27,11 @@ View.prototype.createHandle = function () {
 }
 
 View.prototype.appendItem = function (item) {
-  this.slider.appendChild(item);
+  this.slider.insertBefore(item, this.slider.firstChild);
 }
 
-View.prototype.setLineWidth = function (line, value) {
-  line.style.width = value + '%';
+View.prototype.setLineWidth = function (key, value) {
+  this.items[key].line.style.width = value + '%';
 }
 
 View.ids = 0;

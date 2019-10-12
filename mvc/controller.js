@@ -9,7 +9,6 @@ Controller.prototype.createSingleItem = function (key, value, onChange) {
   }
 
   var line = this._view.createLine(key, value);
-  this._view.setLineWidth(line, value);
   this._view.items[key] = {
     name: key,
     line: line,
@@ -17,6 +16,8 @@ Controller.prototype.createSingleItem = function (key, value, onChange) {
     _next: null,
     _previous: null,
   };
+
+  this._view.setLineWidth(key, value);
 
   this._model.items[key] = {
     name: key,
@@ -63,6 +64,16 @@ Controller.prototype.createItem = function (key, value, onChange) {
   }
 }
 
-Controller.prototype.recalculateItems = function (key) {
+Controller.prototype.divideIntoEqualParts = function () {
+  var keys = Object.keys(this._model.items);
+  var amount = keys.length;
+  var diffs = this._model.getEqualParts(amount);
 
+  keys.forEach(function (key, index) {
+    this._model.items[key].value = diffs[index];
+    var aggregate = diffs
+      .slice(0, index + 1)
+      .reduce(function (acc, curr) { return acc + curr }, 0);
+    this._view.setLineWidth(key, aggregate);
+  }, this);
 }
