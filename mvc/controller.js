@@ -25,7 +25,7 @@ Controller.prototype.createSingleItem = function (name, value, onChange) {
   };
 
   var nValue = Number(value);
-  onChange && !isNaN(nValue) && onChange(nValue);
+  !isNaN(nValue) && onChange(nValue);
 
   return line;
 }
@@ -53,7 +53,7 @@ Controller.prototype.createItem = function (name, value, onChange) {
   this._view.handles.push({ handle: handle, nameFrom: namePrev, nameTo: name });
 
   var nValue = Number(value);
-  onChange && !isNaN(nValue) && onChange(nValue);
+  !isNaN(nValue) && onChange(nValue);
 
   return {
     name: name,
@@ -70,7 +70,7 @@ Controller.prototype.divideSliderIntoEqualParts = function () {
   names.forEach(function (name, index) {
     this._model.items[name].value = diffs[index];
     var onChange = this._view.items[name].onChange;
-    onChange && onChange(diffs[index]);
+    onChange(diffs[index]);
 
     var aggregate = diffs
       .slice(0, index + 1)
@@ -170,7 +170,7 @@ Controller.prototype.bindHandle = function (item) {
     var fromOnChange = this._view.items[nameFrom].onChange;
     var toOnChange = this._view.items[nameTo].onChange;
 
-    fromOnChange && fromOnChange(this._model.items[nameFrom].value);
-    toOnChange && toOnChange(this._model.items[nameTo].value);
+    fromOnChange(this._model.items[nameFrom].value);
+    toOnChange(this._model.items[nameTo].value);
   }
 }

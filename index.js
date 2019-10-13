@@ -12,7 +12,7 @@ function Slider(node) {
 Slider.prototype.mkOnChange = function (onChange) {
   return (function (value) {
     this._wasChanged = true;
-    onChange(value)
+    onChange && onChange(value);
   }).bind(this);
 }
 
