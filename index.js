@@ -9,6 +9,13 @@ function Slider(node) {
   this._controller = new Controller(this._model, this._view);
 }
 
+Slider.prototype.mkOnChange = function (onChange) {
+  return (function (value) {
+    this._wasChanged = true;
+    onChange(value)
+  }).bind(this);
+}
+
 Slider.prototype.addItem = function (name, value, onChange) {
   if (!this._model.isValidValue(value)) {
     throw new Error("Total can't be greater than " + this._model.total);
@@ -16,7 +23,7 @@ Slider.prototype.addItem = function (name, value, onChange) {
 
   if (this._model.hasNoItems()) {
     var validValue = Number.parseInt(value, 10) || this._model.total;
-    var item = this._controller.createSingleItem(name, validValue, onChange);
+    var item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange));
     this._view.appendItem(item);
 
     if (!isNaN(value)) {
@@ -26,7 +33,7 @@ Slider.prototype.addItem = function (name, value, onChange) {
     return;
   }
 
-  var item = this._controller.createItem(name, value, onChange);
+  var item = this._controller.createItem(name, value, this.mkOnChange(onChange));
 
   if (!isNaN(value)) {
     this._wasChanged = true;
