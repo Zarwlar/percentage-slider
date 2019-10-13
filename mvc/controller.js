@@ -112,8 +112,9 @@ Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
   var prevItem = this._view.items[item.name]._previous;
   var prevItemValue = this._model.items[prevItem.name].value;
 
-  var newPrevItemValue = Math.floor(prevItemValue / 2);
-  var newItemValue = Math.ceil(prevItemValue / 2);
+  var prevDividedInto2 = prevItemValue / 2;
+  var newPrevItemValue = Math.floor(prevDividedInto2);
+  var newItemValue = Math.ceil(prevDividedInto2);
 
   prevItem.line.style.width = Number.parseInt(prevItem.line.style.width) - newItemValue + '%';
 
@@ -127,5 +128,25 @@ Controller.prototype.bindHandle = function (item) {
   var prevItem = this._view.items[item.name]._previous;
 
   handle.style.left = Math.round(this._view.getPercentOf(prevItem.name)) + '%';
-  this._view.makeHandleMoveable(handle);
+  this._view.makeHandleMoveable(handle, updateValues.bind(this));
+
+  function updateValues(oldHandleLeft, newHandleLeft) {
+    var handleDataIndex = this._view.handles.findIndex(function (handleData) {
+      return handleData.handle === handle;
+    });
+
+    if (handleDataIndex === -1) {
+      throw new Error("Can't find handle");
+    }
+
+    var handleData = this._view.handles[handleDataIndex];
+
+    // view
+    this._view.setLineWidth(handleData.nameFrom, newHandleLeft);
+
+    // model
+    diff = oldHandleLeft - newHandleLeft;
+    this._model.items[handleData.nameFrom].value -= diff;
+    this._model.items[handleData.nameTo].value += diff;
+  }
 }

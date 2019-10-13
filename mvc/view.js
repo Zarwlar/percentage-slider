@@ -64,7 +64,7 @@ View.prototype.convertToPercent = function (value) {
   return (value * 100) / totalPercent;
 }
 
-View.prototype.makeHandleMoveable = function (handle) {
+View.prototype.makeHandleMoveable = function (handle, updateValues) {
   var _this = this;
   handle.onmousedown = function (event) {
     event.preventDefault();
@@ -85,7 +85,12 @@ View.prototype.makeHandleMoveable = function (handle) {
         newLeft = rightEdge;
       }
 
-      handle.style.left = Math.round(_this.convertToPercent(newLeft)) + '%';
+      var newLeftInPercent = Math.round(_this.convertToPercent(newLeft));
+      var oldLeftInPercent = Math.round(_this.convertToPercent(Number.parseFloat(getComputedStyle(handle).left)));
+
+      handle.style.left = newLeftInPercent + '%';
+
+      updateValues(oldLeftInPercent, newLeftInPercent);
     }
 
     function onMouseUp() {
