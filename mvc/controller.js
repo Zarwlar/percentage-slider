@@ -8,7 +8,7 @@ Controller.prototype.createSingleItem = function (name, value, onChange) {
     throw new Error('Name must be provided!');
   }
 
-  var line = this._view.createLine(name, value);
+  var line = this._view.createLine(name);
   this._view.items[name] = {
     name: name,
     line: line,
@@ -24,11 +24,14 @@ Controller.prototype.createSingleItem = function (name, value, onChange) {
     value: value,
   };
 
+  var nValue = Number(value);
+  onChange && !isNaN(nValue) && onChange(nValue);
+
   return line;
 }
 
 Controller.prototype.createItem = function (name, value, onChange) {
-  var line = this._view.createLine(name, value);
+  var line = this._view.createLine(name);
   var namePrev = this._view.getLastItem();
 
   this._model.items[name] = {
@@ -49,6 +52,9 @@ Controller.prototype.createItem = function (name, value, onChange) {
   var handle = this._view.createHandle();
   this._view.handles.push({ handle: handle, nameFrom: namePrev, nameTo: name });
 
+  var nValue = Number(value);
+  onChange && !isNaN(nValue) && onChange(nValue);
+
   return {
     name: name,
     line: line,
@@ -63,11 +69,14 @@ Controller.prototype.divideSliderIntoEqualParts = function () {
 
   names.forEach(function (name, index) {
     this._model.items[name].value = diffs[index];
+    var onChange = this._view.items[name].onChange;
+    onChange && onChange(diffs[index]);
 
     var aggregate = diffs
       .slice(0, index + 1)
       .reduce(function (acc, curr) { return acc + curr }, 0);
     this._view.setLineWidth(name, aggregate);
+
   }, this);
 
   this._view.handles.forEach(function (handleData) {
@@ -106,6 +115,9 @@ Controller.prototype.addItemToSliderGreedy = function (item) {
   this._view.appendItem(item.handle);
   this.bindHandle(item);
   this._view.appendItem(item.line);
+
+  var onChange = this._view.items[item.name].onChange;
+  onChange(emptySpace);
 }
 
 Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
@@ -121,6 +133,9 @@ Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
   this._model.items[item.name].value = newItemValue;
   this._model.items[prevItem.name].value = newPrevItemValue;
   this.addItemToSlider(newItemValue, item);
+
+  var onChange = this._view.items[item.name].onChange;
+  onChange(newItemValue);
 }
 
 Controller.prototype.bindHandle = function (item) {
@@ -141,12 +156,21 @@ Controller.prototype.bindHandle = function (item) {
 
     var handleData = this._view.handles[handleDataIndex];
 
+    var nameFrom = handleData.nameFrom;
+    var nameTo = handleData.nameTo;
+
     // view
-    this._view.setLineWidth(handleData.nameFrom, newHandleLeft);
+    this._view.setLineWidth(nameFrom, newHandleLeft);
 
     // model
     diff = oldHandleLeft - newHandleLeft;
-    this._model.items[handleData.nameFrom].value -= diff;
-    this._model.items[handleData.nameTo].value += diff;
+    this._model.items[nameFrom].value -= diff;
+    this._model.items[nameTo].value += diff;
+
+    var fromOnChange = this._view.items[nameFrom].onChange;
+    var toOnChange = this._view.items[nameTo].onChange;
+
+    fromOnChange && fromOnChange(this._model.items[nameFrom].value);
+    toOnChange && toOnChange(this._model.items[nameTo].value);
   }
 }

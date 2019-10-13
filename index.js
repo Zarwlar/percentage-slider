@@ -26,7 +26,7 @@ Slider.prototype.addItem = function (name, value, onChange) {
     return;
   }
 
-  var item = this._controller.createItem(name, value);
+  var item = this._controller.createItem(name, value, onChange);
 
   if (!isNaN(value)) {
     this._wasChanged = true;
