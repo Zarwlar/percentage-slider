@@ -46,6 +46,18 @@ View.prototype.setLineWidth = function (name, value) {
   this.items[name].line.style.width = value + '%';
 }
 
+View.prototype.getHandleData = function (handle) {
+  var handleIndex = this.handles.findIndex(function (handleData) {
+    return handleData.handle === handle;
+  });
+
+  if (handleIndex === -1) {
+    throw new Error('Error when trying to find handle');
+  }
+
+  return this.handles[handleIndex];
+}
+
 View.ids = 0;
 View.createSlider = function () {
   var slider = document.createElement('div');
@@ -62,6 +74,22 @@ View.prototype.getPercentOf = function (name) {
 View.prototype.convertToPercent = function (value) {
   var totalPercent = this.slider.offsetWidth;
   return (value * 100) / totalPercent;
+}
+
+View.prototype.findHandleByToLineName = function (name) {
+  var handleIndex = this.handles.findIndex(function (handle) {
+    return handle.nameTo === name;
+  });
+
+  return handleIndex === -1 ? null : this.handles[handleIndex];
+}
+
+View.prototype.findHandleByFromLineName = function (name) {
+  var handleIndex = this.handles.findIndex(function (handle) {
+    return handle.nameFrom === name;
+  });
+
+  return handleIndex === -1 ? null : this.handles[handleIndex];
 }
 
 View.prototype.makeHandleMoveable = function (handle, updateValues) {
@@ -94,6 +122,20 @@ View.prototype.makeHandleMoveable = function (handle, updateValues) {
       updateValues(oldLeftInPercent, newLeftInPercent);
 
       function considerLeftEdgeCase() {
+        var nameFrom = this.getHandleData.call(this, handle).nameFrom;
+        var prevHandleData = this.findHandleByToLineName.call(this, nameFrom);
+        var isFirstHandle = prevHandleData === null;
+
+        if (!isFirstHandle) {
+          var prevHandle = prevHandleData.handle;
+          var prevHandleLeft = Number.parseFloat(getComputedStyle(prevHandle).left);
+
+          if (newLeft < prevHandleLeft) {
+            newLeft = prevHandleLeft;
+            return;
+          }
+        }
+
         if (newLeft < 0) {
           newLeft = 0;
         }
@@ -108,6 +150,20 @@ View.prototype.makeHandleMoveable = function (handle, updateValues) {
           var longestLine = this.slider.firstChild;
           rightEdgeSource = longestLine.offsetWidth;
           offset = longestLine.getBoundingClientRect().left;
+        }
+
+        var nameTo = this.getHandleData.call(this, handle).nameTo;
+        var nextHandleData = this.findHandleByFromLineName.call(this, nameTo);
+        var isLastLine = nextHandleData === null;
+
+        if (!isLastLine) {
+          var nextHandle = nextHandleData.handle;
+          var nextHandleLeft = Number.parseFloat(getComputedStyle(nextHandle).left);
+
+          if (newLeft > nextHandleLeft) {
+            newLeft = nextHandleLeft;
+            return;
+          }
         }
 
         newLeft -= offset;
