@@ -7,7 +7,7 @@ function View(node) {
   this.node.appendChild(this.slider, this.node.nextSibling);
 }
 
-View.prototype.createLine = function (name, value, onChange) {
+View.prototype.createLine = function (name) {
   var id = ++this.lineIds;
   var line = document.createElement('div');
 
@@ -66,8 +66,14 @@ View.prototype.convertToPercent = function (value) {
 
 View.prototype.makeHandleMoveable = function (handle, updateValues) {
   var _this = this;
+
   handle.onmousedown = function (event) {
     event.preventDefault();
+
+    var longestLineWidth = getComputedStyle(_this.slider.firstChild).width;
+    var longestLinePercent = Math.round(_this.convertToPercent(Number.parseFloat(longestLineWidth)));
+
+    isPartialFilledSlider = longestLinePercent !== 100;
 
     var shiftX = event.clientX - handle.getBoundingClientRect().left;
 
@@ -77,13 +83,8 @@ View.prototype.makeHandleMoveable = function (handle, updateValues) {
     function onMouseMove(event) {
       var newLeft = event.clientX - shiftX - _this.slider.getBoundingClientRect().left;
 
-      if (newLeft < 0) {
-        newLeft = 0;
-      }
-      var rightEdge = _this.slider.offsetWidth - handle.offsetWidth;
-      if (newLeft > rightEdge) {
-        newLeft = rightEdge;
-      }
+      considerLeftEdgeCase.call(_this);
+      considerRightEdgeCase.call(_this);
 
       var newLeftInPercent = Math.round(_this.convertToPercent(newLeft));
       var oldLeftInPercent = Math.round(_this.convertToPercent(Number.parseFloat(getComputedStyle(handle).left)));
@@ -91,6 +92,31 @@ View.prototype.makeHandleMoveable = function (handle, updateValues) {
       handle.style.left = newLeftInPercent + '%';
 
       updateValues(oldLeftInPercent, newLeftInPercent);
+
+      function considerLeftEdgeCase() {
+        if (newLeft < 0) {
+          newLeft = 0;
+        }
+      }
+
+      function considerRightEdgeCase() {
+        var rightEdgeSource = this.slider.offsetWidth;
+        var offset = this.slider.getBoundingClientRect().left;
+        newLeft += offset;
+
+        if (isPartialFilledSlider) {
+          var longestLine = this.slider.firstChild;
+          rightEdgeSource = longestLine.offsetWidth;
+          offset = longestLine.getBoundingClientRect().left;
+        }
+
+        newLeft -= offset;
+
+        var rightEdge = rightEdgeSource;
+        if (newLeft > rightEdge) {
+          newLeft = rightEdge;
+        }
+      }
     }
 
     function onMouseUp() {
