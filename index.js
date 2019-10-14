@@ -65,6 +65,31 @@ Slider.prototype.addItem = function (name, value, onChange) {
   return;
 }
 
+Slider.prototype.addItems = function (itemsData) {
+
+  var areItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
+
+  if (areItemsAlreadyAdded) {
+    throw new Error("Items can not be added to already initialized slider");
+  }
+
+  if (itemsData.length === 0) {
+    throw new Error("Items length can not be equal 0");
+  }
+
+  var convertedItems = itemsData.map(function (itemData) {
+    return {
+      name: itemData.name,
+      value: itemData.value,
+      onChange: this.mkOnChange(itemData.onChange),
+    };
+  }, this);
+
+  //FIXME: Prepare itemsData values through model
+
+  var items = this._controller.createItems(convertedItems);
+  this._controller.addItemsToSlider(items);
+}
 
 Slider.prototype.removeItem = function (name, onRemove) {
   this._controller.removeItem(name, this.mkOnRemove(onRemove));

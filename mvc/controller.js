@@ -9,6 +9,8 @@ Controller.prototype.createSingleItem = function (name, value, onChange) {
   }
 
   var line = this._view.createLine(name);
+  var nValue = Number(value);
+
   this._view.items[name] = {
     name: name,
     line: line,
@@ -17,17 +19,20 @@ Controller.prototype.createSingleItem = function (name, value, onChange) {
     _previous: null,
   };
 
-  this._view.setLineWidth(name, value);
+  this._view.setLineWidth(name, nValue);
 
   this._model.items[name] = {
     name: name,
-    value: value,
+    value: nValue,
   };
 
-  var nValue = Number(value);
   onChange(nValue, { auto: nValue === this._model.total });
 
-  return line;
+  return {
+    line,
+    name: name,
+    value: nValue,
+  };
 }
 
 Controller.prototype.createItem = function (name, value, onChange) {
@@ -57,6 +62,20 @@ Controller.prototype.createItem = function (name, value, onChange) {
     line: line,
     handle: handle,
   }
+}
+
+Controller.prototype.createItems = function (items) {
+  if (items.length === 1) {
+    return this.createSingleItem(items[0]);
+  }
+
+  var firstItemData = items[0];
+  var singleLineItem = this.createSingleItem(firstItemData.name, firstItemData.value, firstItemData.onChange);
+  var restItems = items.slice(1).map(function (itemData) {
+    return this.createItem(itemData.name, itemData.value, itemData.onChange);
+  }, this);
+
+  return [singleLineItem].concat(restItems);
 }
 
 Controller.prototype.divideSliderIntoEqualParts = function () {
@@ -263,5 +282,15 @@ Controller.prototype.removeItem = function (name, onRemove) {
       leftHandleData.nameTo = rightHandleData.nameTo;
     }
   }
+}
 
+Controller.prototype.addItemsToSlider = function (items) {
+  var singleLine = items[0];
+  this._view.appendItem(singleLine.line);
+
+  items.slice(1).forEach(function (item) {
+    var itemName = item.name;
+    debugger;
+    this.addItemToSlider(this._model.items[itemName].value, item);
+  }, this)
 }

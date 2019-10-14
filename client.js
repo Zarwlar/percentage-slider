@@ -1,5 +1,6 @@
 var node = document.getElementById('slider-root');
 var addItemBtn = document.getElementById('add-item-btn');
+var addSetOfItemsBtn = document.getElementById('add-set-of-items');
 var removeItemBtn = document.getElementById('remove-item-btn');
 var itemNameInput = document.getElementById('item-name-input');
 var itemValueInput = document.getElementById('item-value-input');
@@ -42,4 +43,15 @@ removeItemBtn.addEventListener('click', function () {
     var removingFragment = document.querySelector('.' + name);
     removingFragment.parentNode.removeChild(removingFragment);
   }
+});
+
+
+addSetOfItemsBtn.addEventListener('click', function () {
+  var itemsData = [
+    { name: 'a', value: 15, onChange: undefined },
+    { name: 'b', value: 60, onChange: undefined },
+    { name: 'c', value: 15, onChange: undefined },
+    { name: 'f', value: 1, onChange: undefined },
+  ];
+  slider.addItems(itemsData);
 });
