@@ -173,7 +173,6 @@ Controller.prototype.bindHandle = function (item) {
   }
 }
 
-// FIXME: Sync handles data
 Controller.prototype.removeItem = function (name, onRemove) {
   var removingItemModel = this._model.items[name];
   var removingItemView = this._view.items[name];
@@ -238,8 +237,11 @@ Controller.prototype.removeItem = function (name, onRemove) {
     removingItemView._previous._next = removingItemView._next;
   }
 
+  updateHandles.call(this);
+
   this._view.items[nextItemName].onChange(this._model.items[nextItemName].value);
   this._view.removeFromHandles(handleData);
+
   View.removeElement(handleData.handle);
   View.removeElement(line);
 
@@ -247,5 +249,19 @@ Controller.prototype.removeItem = function (name, onRemove) {
   delete this._view.items[name];
 
   onRemove();
+
+  function updateHandles() {
+    var isLastItem = this._view.getLastItemName() === name;
+    if (isLastItem) {
+      return;
+    }
+
+    var leftHandleData = this._view.findHandleDataByToLineName(name);
+    var rightHandleData = this._view.findHandleDataByFromLineName(name);
+
+    if (leftHandleData) {
+      leftHandleData.nameTo = rightHandleData.nameTo;
+    }
+  }
 
 }

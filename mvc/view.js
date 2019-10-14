@@ -19,12 +19,10 @@ View.removeElement = function (item) {
   item.parentNode.removeChild(item);
 }
 
-View.prototype.removeFromHandles = function (handle) {
-  var handleIndex = this.handles.findIndex(function (handleData) {
-    return handleData.handle === handle;
+View.prototype.removeFromHandles = function (handleData) {
+  this.handles = this.handles.filter(function (_handleData) {
+    return _handleData !== handleData;
   });
-
-  this.handles.splice(handleIndex, 1);
 }
 
 View.prototype.createLine = function (name) {
