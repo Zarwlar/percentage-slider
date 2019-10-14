@@ -1,8 +1,13 @@
+export interface IItemModel {
+  name: string;
+  value: number;
+}
+
 export default class Model {
-  public items = {};
+  public items: Record<string, IItemModel> = {};
   public total: number = 100;
 
-  public getEqualParts(n: number) {
+  public getEqualParts(n: number): number[] {
     const values = [];
     let total = this.total;
 
