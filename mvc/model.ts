@@ -1,17 +1,20 @@
 export default class Model {
-  public items = {}
+  public items = {};
   public total: number = 100;
 
   public getEqualParts(n: number) {
-    var values = [];
-    var total = this.total;
+    const values = [];
+    let total = this.total;
 
     while (total > 0 && n > 0) {
-      var a = total / n;
-      if (a % 2 == 0)
+      let a = total / n;
+
+      if (a % 2 == 0) {
         a = Math.floor(total / n);
-      else
+      } else {
         a = Math.ceil(total / n);
+      }
+
       total -= a;
       n--;
       values.push(a);

@@ -1,200 +1,216 @@
-export default function View(node) {
-  this.node = node;
-  this.slider = View.createSlider();
-  this.lineIds = 0;
-  this.items = {};
-  this.handles = [];
-  this.node.appendChild(this.slider, this.node.nextSibling);
+interface IHandle {
+  handle: HTMLElement;
+  nameFrom: string;
+  nameTo: string
 }
 
-View.ids = 0;
-View.createSlider = function () {
-  var slider = document.createElement('div');
-  slider.classList.add('slider');
-  slider.setAttribute('name', 'slider_' + ++View.ids);
-  return slider;
-}
+export default class View {
+  public static ids: number = 0;
 
-View.removeElement = function (item) {
-  item.parentNode.removeChild(item);
-}
-
-View.prototype.removeFromHandles = function (handle) {
-  var handleIndex = this.handles.findIndex(function (handleData) {
-    return handleData.handle === handle;
-  });
-
-  this.handles.splice(handleIndex, 1);
-}
-
-View.prototype.createLine = function (name) {
-  var id = ++this.lineIds;
-  var line = document.createElement('div');
-
-  line.setAttribute('name', name);
-  line.classList.add('line');
-  line.classList.add('line_' + id);
-
-  return line;
-}
-
-View.prototype.createHandle = function () {
-  var handle = document.createElement('div');
-
-  handle.classList.add('handle');
-
-  return handle;
-}
-
-View.prototype.appendItem = function (item) {
-  this.slider.insertBefore(item, this.slider.firstChild);
-}
-
-View.prototype.setLineWidth = function (name, value) {
-  this.items[name].line.style.width = value + '%';
-}
-
-View.prototype.getLastItemName = function () {
-  var namesPrev = Object.keys(this.items).filter(function (item) {
-    return this.items[item]._next === null;
-  }, this);
-
-  if (namesPrev.length !== 1) {
-    throw new Error('Error when trying to find last item');
+  public static createSlider() {
+    var slider = document.createElement('div');
+    slider.classList.add('slider');
+    slider.setAttribute('name', 'slider_' + ++View.ids);
+    return slider;
   }
 
-  return namesPrev[0];
-}
+  public static removeElement(item: HTMLElement) {
+    if (!item.parentNode) { return; }
 
-View.prototype.getHandleData = function (handle) {
-  var handleIndex = this.handles.findIndex(function (handleData) {
-    return handleData.handle === handle;
-  });
-
-  if (handleIndex === -1) {
-    throw new Error('Error when trying to find handle');
+    item.parentNode.removeChild(item);
   }
 
-  return this.handles[handleIndex];
-}
+  public node: HTMLElement;
+  public slider: HTMLElement;
+  public lineIds: number;
+  public items: any;
+  public handles: IHandle[];
 
-View.prototype.getPercentOf = function (name) {
-  var particularLineWidth = this.items[name].line.offsetWidth;
-  return this.convertToPercent(particularLineWidth);
-}
+  public constructor(node: HTMLElement) {
+    this.node = node;
+    this.slider = View.createSlider();
+    this.lineIds = 0;
+    this.items = {};
+    this.handles = [];
 
-View.prototype.convertToPercent = function (value) {
-  var totalPercent = this.slider.offsetWidth;
-  return (value * 100) / totalPercent;
-}
+    this.node.appendChild(this.slider);
+  }
 
-View.prototype.findHandleDataByToLineName = function (name) {
-  var handleIndex = this.handles.findIndex(function (handle) {
-    return handle.nameTo === name;
-  });
+  public removeFromHandles(handle: HTMLElement) {
+    var handleIndex = this.handles.findIndex(handleData => handleData.handle === handle);
 
-  return handleIndex === -1 ? null : this.handles[handleIndex];
-}
+    this.handles.splice(handleIndex, 1);
+  }
 
-View.prototype.findHandleDataByFromLineName = function (name) {
-  var handleIndex = this.handles.findIndex(function (handle) {
-    return handle.nameFrom === name;
-  });
+  public createLine(name: string) {
+    var id = ++this.lineIds;
+    var line = document.createElement('div');
 
-  return handleIndex === -1 ? null : this.handles[handleIndex];
-}
+    line.setAttribute('name', name);
+    line.classList.add('line');
+    line.classList.add('line_' + id);
 
-View.prototype.makeHandleMoveable = function (handle, updateValues) {
-  var _this = this;
+    return line;
+  }
 
-  handle.onmousedown = function (event) {
-    event.preventDefault();
+  public createHandle() {
+    var handle = document.createElement('div');
 
-    var longestLineWidth = getComputedStyle(_this.slider.firstChild).width;
-    var longestLinePercent = Math.round(_this.convertToPercent(Number.parseFloat(longestLineWidth)));
+    handle.classList.add('handle');
 
-    isPartialFilledSlider = longestLinePercent !== 100;
+    return handle;
+  }
 
-    var shiftX = event.clientX - handle.getBoundingClientRect().left;
+  public appendItem(item: HTMLElement) {
+    this.slider.insertBefore(item, this.slider.firstChild);
+  }
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+  public setLineWidth(name: string, value: number) {
+    this.items[name].line.style.width = `${value}%`;
+  }
 
-    function onMouseMove(event) {
-      var newLeft = event.clientX - shiftX - _this.slider.getBoundingClientRect().left;
+  public getLastItemName() {
+    const namesPrev = Object
+      .keys(this.items)
+      .filter(item => this.items[item]._next === null, this);
 
-      considerLeftEdgeCase.call(_this);
-      considerRightEdgeCase.call(_this);
+    if (namesPrev.length !== 1) {
+      throw new Error('Error when trying to find last item');
+    }
 
-      var newLeftInPercent = Math.round(_this.convertToPercent(newLeft));
-      var oldLeftInPercent = Math.round(_this.convertToPercent(Number.parseFloat(getComputedStyle(handle).left)));
+    return namesPrev[0];
+  }
 
-      handle.style.left = newLeftInPercent + '%';
+  public getHandleData(handle: HTMLElement) {
+    const handleIndex = this.handles.findIndex(
+      handleData => handleData.handle === handle
+    );
 
-      updateValues(oldLeftInPercent, newLeftInPercent);
+    if (handleIndex === -1) {
+      throw new Error('Error when trying to find handle');
+    }
 
-      function considerLeftEdgeCase() {
-        var nameFrom = this.getHandleData.call(this, handle).nameFrom;
-        var prevHandleData = this.findHandleDataByToLineName.call(this, nameFrom);
-        var isFirstHandle = prevHandleData === null;
+    return this.handles[handleIndex];
+  }
 
-        if (!isFirstHandle) {
-          var prevHandle = prevHandleData.handle;
-          var prevHandleLeft = Number.parseFloat(getComputedStyle(prevHandle).left);
+  public getPercentOf(name: string) {
+    const particularLineWidth = this.items[name].line.offsetWidth;
+    return this.convertToPercent(particularLineWidth);
+  }
 
-          if (newLeft < prevHandleLeft) {
-            newLeft = prevHandleLeft;
-            return;
+  public convertToPercent(value: number) {
+    const totalPercent = this.slider.offsetWidth;
+    return (value * 100) / totalPercent;
+  }
+
+  public findHandleDataByToLineName(name: string) {
+    const handleIndex = this.handles.findIndex(handle => {
+      return handle.nameTo === name;
+    });
+
+    return handleIndex === -1 ? null : this.handles[handleIndex];
+  }
+
+  public findHandleDataByFromLineName(name: string) {
+    const handleIndex = this.handles.findIndex(handle => {
+      return handle.nameFrom === name;
+    });
+
+    return handleIndex === -1 ? null : this.handles[handleIndex];
+  }
+
+  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void) {
+
+    handle.onmousedown = (event) => {
+      event.preventDefault();
+
+      const sliderWidthStr = this.slider.firstChild ? getComputedStyle(this.slider.firstChild as Element).width : '0';
+      const longestLineWidth = Number.parseFloat(sliderWidthStr || '');
+      const longestLinePercent = Math.round(this.convertToPercent(longestLineWidth));
+
+      const isPartialFilledSlider = longestLinePercent !== 100;
+      const shiftX = event.clientX - handle.getBoundingClientRect().left;
+
+      const onMouseMove = (event: MouseEvent) => {
+        let newLeft = event.clientX - shiftX - this.slider.getBoundingClientRect().left;
+
+        considerLeftEdgeCase.call(this);
+        considerRightEdgeCase.call(this);
+
+        const curLeft = Number.parseFloat(getComputedStyle(handle).left || '0');
+        const newLeftInPercent = Math.round(this.convertToPercent(newLeft));
+        const oldLeftInPercent = Math.round(this.convertToPercent(curLeft));
+
+        handle.style.left = `${newLeftInPercent}%`;
+
+        updateValues(oldLeftInPercent, newLeftInPercent);
+
+        function considerLeftEdgeCase() {
+          const nameFrom = this.getHandleData.call(this, handle).nameFrom;
+          const prevHandleData = this.findHandleDataByToLineName.call(this, nameFrom);
+          const isFirstHandle = prevHandleData === null;
+
+          if (!isFirstHandle) {
+            const prevHandle = prevHandleData.handle;
+            const prevHandleLeft = Number.parseFloat(getComputedStyle(prevHandle).left || '0');
+
+            if (newLeft < prevHandleLeft) {
+              newLeft = prevHandleLeft;
+              return;
+            }
+          }
+
+          if (newLeft < 0) {
+            newLeft = 0;
           }
         }
 
-        if (newLeft < 0) {
-          newLeft = 0;
-        }
-      }
+        function considerRightEdgeCase() {
+          var rightEdgeSource = this.slider.offsetWidth;
+          var offset = this.slider.getBoundingClientRect().left;
+          newLeft += offset;
 
-      function considerRightEdgeCase() {
-        var rightEdgeSource = this.slider.offsetWidth;
-        var offset = this.slider.getBoundingClientRect().left;
-        newLeft += offset;
+          if (isPartialFilledSlider) {
+            var longestLine = this.slider.firstChild;
+            rightEdgeSource = longestLine.offsetWidth;
+            offset = longestLine.getBoundingClientRect().left;
+          }
 
-        if (isPartialFilledSlider) {
-          var longestLine = this.slider.firstChild;
-          rightEdgeSource = longestLine.offsetWidth;
-          offset = longestLine.getBoundingClientRect().left;
-        }
+          var nameTo = this.getHandleData.call(this, handle).nameTo;
+          var nextHandleData = this.findHandleDataByFromLineName.call(this, nameTo);
+          var isLastLine = nextHandleData === null;
 
-        var nameTo = this.getHandleData.call(this, handle).nameTo;
-        var nextHandleData = this.findHandleDataByFromLineName.call(this, nameTo);
-        var isLastLine = nextHandleData === null;
+          if (!isLastLine) {
+            var nextHandle = nextHandleData.handle;
+            var nextHandleLeft = Number.parseFloat(getComputedStyle(nextHandle).left || '0');
 
-        if (!isLastLine) {
-          var nextHandle = nextHandleData.handle;
-          var nextHandleLeft = Number.parseFloat(getComputedStyle(nextHandle).left);
+            if (newLeft > nextHandleLeft) {
+              newLeft = nextHandleLeft;
+              return;
+            }
+          }
 
-          if (newLeft > nextHandleLeft) {
-            newLeft = nextHandleLeft;
-            return;
+          newLeft -= offset;
+
+          var rightEdge = rightEdgeSource;
+          if (newLeft > rightEdge) {
+            newLeft = rightEdge;
           }
         }
-
-        newLeft -= offset;
-
-        var rightEdge = rightEdgeSource;
-        if (newLeft > rightEdge) {
-          newLeft = rightEdge;
-        }
       }
-    }
 
-    function onMouseUp() {
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mousemove', onMouseMove);
-    }
+      const onMouseUp = () => {
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+      }
 
-  };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
 
-  handle.ondragstart = function () {
-    return false;
-  };
+    handle.ondragstart = function () {
+      return false;
+    };
+  }
 }
+
