@@ -196,7 +196,6 @@ export default class Controller {
     this._view.makeHandleMoveable(handle, updateValues);
   }
 
-  // FIXME: Sync handles data
   public removeItem(name: string, onRemove: () => void) {
     var removingItemModel = this._model.items[name];
     var removingItemView = this._view.items[name];
@@ -209,8 +208,10 @@ export default class Controller {
     var isSingleItem = Object.keys(this._model.items).length === 1;
 
     if (isSingleItem) {
-
       this._model.items = {};
+      this._view.items = {};
+      this._view.handles = [];
+
       View.removeElement(removingItemView.line);
 
       onRemove();
@@ -223,8 +224,12 @@ export default class Controller {
     if (isLastItem) {
       const handleData = this._view.findHandleDataByToLineName(name);
       const line = removingItemView.line;
-      const prevItemName = handleData ? handleData.nameFrom : '';
+      const prevItemName = handleData && handleData.nameFrom;
       const valueTo = removingItemModel.value;
+
+      if (!prevItemName) {
+        throw new Error('Unexpected behavior during remove last item');
+      }
 
       this._view.items[prevItemName]._next = null;
       this._model.items[prevItemName].value += valueTo;
@@ -232,28 +237,11 @@ export default class Controller {
       this._view.setLineWidth(prevItemName, this._model.total);
       this._view.items[prevItemName].onChange(this._model.items[prevItemName].value);
 
-      // This doesn't work correctly
-      const updateHandles = () => {
-        var isLastItem = this._view.getLastItemName() === name;
-        if (isLastItem) {
-          return;
-        }
-
-        var leftHandleData = this._view.findHandleDataByToLineName(name);
-        var rightHandleData = this._view.findHandleDataByFromLineName(name);
-
-        if (leftHandleData && rightHandleData) {
-          leftHandleData.nameTo = rightHandleData.nameTo;
-        }
-      }
-
-
-      updateHandles();
-
       if (handleData) {
         View.removeElement(handleData.handle);
         this._view.removeFromHandles(handleData.handle);
       }
+
       View.removeElement(line);
 
       delete this._model.items[name];
@@ -266,12 +254,15 @@ export default class Controller {
 
     // Generic case
     const handleData = this._view.findHandleDataByFromLineName(name);
-    const nextItemName = handleData ? handleData.nameTo : '';
+    const nextItemName = handleData && handleData.nameTo;
     const removingItemValue = removingItemModel.value;
     var line = removingItemView.line;
 
-    this._model.items[nextItemName].value += removingItemValue;
+    if (!nextItemName) {
+      throw new Error('Unexpected behavior during remove item');
+    }
 
+    this._model.items[nextItemName].value += removingItemValue;
     this._view.items[nextItemName]._previous = removingItemView._previous;
 
     var isFirstItem = removingItemView._previous === null;
@@ -279,6 +270,22 @@ export default class Controller {
     if (!isFirstItem) {
       removingItemView._previous._next = removingItemView._next;
     }
+
+    // This doesn't work correctly
+    const updateHandles = () => {
+      if (isLastItem) {
+        return;
+      }
+
+      var leftHandleData = this._view.findHandleDataByToLineName(name);
+      var rightHandleData = this._view.findHandleDataByFromLineName(name);
+
+      if (leftHandleData && rightHandleData) {
+        leftHandleData.nameTo = rightHandleData.nameTo;
+      }
+    }
+
+    updateHandles();
 
     this._view.items[nextItemName].onChange(this._model.items[nextItemName].value);
 
@@ -292,5 +299,6 @@ export default class Controller {
     delete this._view.items[name];
 
     onRemove();
+
   }
 }

@@ -132,25 +132,14 @@ export default class View {
       const onMouseMove = (event: MouseEvent) => {
         let newLeft = event.clientX - shiftX - this.slider.getBoundingClientRect().left;
 
-        considerLeftEdgeCase.call(this);
-        considerRightEdgeCase.call(this);
-
-        const curLeft = Number.parseFloat(getComputedStyle(handle).left || '0');
-        const newLeftInPercent = Math.round(this.convertToPercent(newLeft));
-        const oldLeftInPercent = Math.round(this.convertToPercent(curLeft));
-
-        handle.style.left = `${newLeftInPercent}%`;
-
-        updateValues(oldLeftInPercent, newLeftInPercent);
-
-        function considerLeftEdgeCase() {
-          const nameFrom = this.getHandleData.call(this, handle).nameFrom;
-          const prevHandleData = this.findHandleDataByToLineName.call(this, nameFrom);
+        const considerLeftEdgeCase = () => {
+          const nameFrom = this.getHandleData(handle).nameFrom;
+          const prevHandleData = this.findHandleDataByToLineName(nameFrom);
           const isFirstHandle = prevHandleData === null;
 
           if (!isFirstHandle) {
-            const prevHandle = prevHandleData.handle;
-            const prevHandleLeft = Number.parseFloat(getComputedStyle(prevHandle).left || '0');
+            const prevHandle = prevHandleData && prevHandleData.handle;
+            const prevHandleLeft = prevHandle && Number.parseFloat(getComputedStyle(prevHandle).left || '0') || 0;
 
             if (newLeft < prevHandleLeft) {
               newLeft = prevHandleLeft;
@@ -163,24 +152,24 @@ export default class View {
           }
         }
 
-        function considerRightEdgeCase() {
-          var rightEdgeSource = this.slider.offsetWidth;
-          var offset = this.slider.getBoundingClientRect().left;
+        const considerRightEdgeCase = () => {
+          let rightEdgeSource = this.slider.offsetWidth;
+          let offset = this.slider.getBoundingClientRect().left;
           newLeft += offset;
 
           if (isPartialFilledSlider) {
-            var longestLine = this.slider.firstChild;
-            rightEdgeSource = longestLine.offsetWidth;
-            offset = longestLine.getBoundingClientRect().left;
+            const longestLine = this.slider.firstChild;
+            rightEdgeSource = longestLine && (longestLine as HTMLElement).offsetWidth || rightEdgeSource;
+            offset = longestLine && (longestLine as HTMLElement).getBoundingClientRect().left || offset;
           }
 
-          var nameTo = this.getHandleData.call(this, handle).nameTo;
-          var nextHandleData = this.findHandleDataByFromLineName.call(this, nameTo);
-          var isLastLine = nextHandleData === null;
+          const nameTo = this.getHandleData.call(this, handle).nameTo;
+          const nextHandleData = this.findHandleDataByFromLineName.call(this, nameTo);
+          const isLastLine = nextHandleData === null;
 
           if (!isLastLine) {
-            var nextHandle = nextHandleData.handle;
-            var nextHandleLeft = Number.parseFloat(getComputedStyle(nextHandle).left || '0');
+            const nextHandle = nextHandleData.handle;
+            const nextHandleLeft = Number.parseFloat(getComputedStyle(nextHandle).left || '0');
 
             if (newLeft > nextHandleLeft) {
               newLeft = nextHandleLeft;
@@ -190,11 +179,23 @@ export default class View {
 
           newLeft -= offset;
 
-          var rightEdge = rightEdgeSource;
+          const rightEdge = rightEdgeSource;
           if (newLeft > rightEdge) {
             newLeft = rightEdge;
           }
         }
+
+        considerLeftEdgeCase();
+        considerRightEdgeCase();
+
+        const curLeft = Number.parseFloat(getComputedStyle(handle).left || '0');
+        const newLeftInPercent = Math.round(this.convertToPercent(newLeft));
+        const oldLeftInPercent = Math.round(this.convertToPercent(curLeft));
+
+        handle.style.left = `${newLeftInPercent}%`;
+
+        updateValues(oldLeftInPercent, newLeftInPercent);
+
       }
 
       const onMouseUp = () => {
