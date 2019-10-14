@@ -1,7 +1,7 @@
 interface IHandle {
   handle: HTMLElement;
   nameFrom: string;
-  nameTo: string
+  nameTo: string;
 }
 
 export default class View {
@@ -37,9 +37,7 @@ export default class View {
   }
 
   public removeFromHandles(handle: HTMLElement) {
-    var handleIndex = this.handles.findIndex(handleData => handleData.handle === handle);
-
-    this.handles.splice(handleIndex, 1);
+    this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
   }
 
   public createLine(name: string) {
@@ -213,4 +211,3 @@ export default class View {
     };
   }
 }
-

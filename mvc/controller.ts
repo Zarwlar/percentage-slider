@@ -232,6 +232,24 @@ export default class Controller {
       this._view.setLineWidth(prevItemName, this._model.total);
       this._view.items[prevItemName].onChange(this._model.items[prevItemName].value);
 
+      // This doesn't work correctly
+      const updateHandles = () => {
+        var isLastItem = this._view.getLastItemName() === name;
+        if (isLastItem) {
+          return;
+        }
+
+        var leftHandleData = this._view.findHandleDataByToLineName(name);
+        var rightHandleData = this._view.findHandleDataByFromLineName(name);
+
+        if (leftHandleData && rightHandleData) {
+          leftHandleData.nameTo = rightHandleData.nameTo;
+        }
+      }
+
+
+      updateHandles();
+
       if (handleData) {
         View.removeElement(handleData.handle);
         this._view.removeFromHandles(handleData.handle);
@@ -276,4 +294,3 @@ export default class Controller {
     onRemove();
   }
 }
-

@@ -38,6 +38,7 @@ export default class Model {
   }
 
   public isValidValue(value: number) {
+    var value = isNaN(value) ? 0 : value;
     return this.getSumOfItems() + value <= this.total;
   }
 
