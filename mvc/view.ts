@@ -1,4 +1,4 @@
-function View(node) {
+export default function View(node) {
   this.node = node;
   this.slider = View.createSlider();
   this.lineIds = 0;

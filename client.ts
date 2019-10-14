@@ -1,3 +1,5 @@
+import Slider from './index';
+
 var node = document.getElementById('slider-root');
 var addItemBtn = document.getElementById('add-item-btn');
 var removeItemBtn = document.getElementById('remove-item-btn');

@@ -1,4 +1,7 @@
-function Slider(node) {
+import Model from './mvc/model';
+import View from './mvc/view';
+
+export default function Slider(node: HTMLElement | null) {
   if (!node) {
     throw new Error('Node is empty!');
   }

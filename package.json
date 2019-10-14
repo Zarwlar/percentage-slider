@@ -1,0 +1,26 @@
+{
+  "name": "percentage-slider",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zarwlar/percentage-slider.git"
+  },
+  "keywords": [
+    "slider"
+  ],
+  "author": "Alexey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Zarwlar/percentage-slider/issues"
+  },
+  "homepage": "https://github.com/Zarwlar/percentage-slider#readme",
+  "dependencies": {
+    "parcel": "^1.12.4",
+    "typescript": "^3.6.4"
+  }
+}
