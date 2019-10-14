@@ -21,6 +21,7 @@
   "homepage": "https://github.com/Zarwlar/percentage-slider#readme",
   "dependencies": {
     "parcel": "^1.12.4",
+    "tslib": "^1.10.0",
     "typescript": "^3.6.4"
   }
 }

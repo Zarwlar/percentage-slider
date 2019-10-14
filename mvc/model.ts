@@ -31,8 +31,8 @@ export default class Model {
   public getSumOfItems() {
     return Object
       .keys(this.items)
-      .reduce(function (acc, item) {
-        var currValue = this.items[item].value;
+      .reduce((acc, item) => {
+        const currValue = this.items[item].value;
         return isNaN(currValue) ? acc : acc + currValue;
       }, 0);
   }

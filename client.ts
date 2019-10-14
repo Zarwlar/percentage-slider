@@ -1,11 +1,11 @@
 import Slider from './index';
 
-var node = document.getElementById('slider-root');
-var addItemBtn = document.getElementById('add-item-btn');
-var removeItemBtn = document.getElementById('remove-item-btn');
-var itemNameInput = document.getElementById('item-name-input');
-var itemValueInput = document.getElementById('item-value-input');
-var itemsList = document.getElementById('items-list');
+const node = document.getElementById('slider-root')!;
+const addItemBtn = document.getElementById('add-item-btn')!;
+const removeItemBtn = document.getElementById('remove-item-btn')!;
+const itemNameInput = document.getElementById('item-name-input')! as HTMLInputElement;
+const itemValueInput = document.getElementById('item-value-input')! as HTMLInputElement;
+const itemsList = document.getElementById('items-list')!;
 
 const slider = new Slider(node);
 
@@ -22,7 +22,7 @@ addItemBtn.addEventListener('click', function () {
 
   var valueFragment = document.createElement('span');
   valueFragment.classList.add('item-value');
-  valueFragment.textContent = value;
+  valueFragment.textContent = String(value);
 
   fragment.appendChild(nameFragment);
   fragment.appendChild(valueFragment)
@@ -30,7 +30,7 @@ addItemBtn.addEventListener('click', function () {
 
   slider.addItem(name, value, updateValue);
 
-  function updateValue(value) {
+  function updateValue(value: number) {
     valueFragment.textContent = value + '%';
   }
 });
@@ -42,6 +42,9 @@ removeItemBtn.addEventListener('click', function () {
 
   function remove() {
     var removingFragment = document.querySelector('.' + name);
+
+    if (!removingFragment || !removingFragment.parentNode) { return; }
+
     removingFragment.parentNode.removeChild(removingFragment);
   }
 });
