@@ -25,14 +25,14 @@ Controller.prototype.createSingleItem = function (name, value, onChange) {
   };
 
   var nValue = Number(value);
-  !isNaN(nValue) && onChange(nValue);
+  onChange(nValue, { auto: nValue === this._model.total });
 
   return line;
 }
 
 Controller.prototype.createItem = function (name, value, onChange) {
   var line = this._view.createLine(name);
-  var namePrev = this._view.getLastItem();
+  var namePrev = this._view.getLastItemName();
 
   this._model.items[name] = {
     name: name,
@@ -52,9 +52,6 @@ Controller.prototype.createItem = function (name, value, onChange) {
   var handle = this._view.createHandle();
   this._view.handles.push({ handle: handle, nameFrom: namePrev, nameTo: name });
 
-  var nValue = Number(value);
-  !isNaN(nValue) && onChange(nValue);
-
   return {
     name: name,
     line: line,
@@ -70,7 +67,7 @@ Controller.prototype.divideSliderIntoEqualParts = function () {
   names.forEach(function (name, index) {
     this._model.items[name].value = diffs[index];
     var onChange = this._view.items[name].onChange;
-    onChange(diffs[index]);
+    onChange(diffs[index], { auto: true });
 
     var aggregate = diffs
       .slice(0, index + 1)
@@ -100,6 +97,8 @@ Controller.prototype.addItemToSlider = function (value, item) {
   this._view.appendItem(item.handle);
   this.bindHandle(item);
   this._view.appendItem(item.line);
+
+  this._view.items[item.name].onChange(value);
 }
 
 Controller.prototype.addItemToSliderAuto = function (item) {
@@ -116,8 +115,7 @@ Controller.prototype.addItemToSliderGreedy = function (item) {
   this.bindHandle(item);
   this._view.appendItem(item.line);
 
-  var onChange = this._view.items[item.name].onChange;
-  onChange(emptySpace);
+  this._view.items[item.name].onChange(emptySpace, { auto: true });
 }
 
 Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
@@ -134,8 +132,8 @@ Controller.prototype.addItemToSliderBySplitLastItem = function (item) {
   this._model.items[prevItem.name].value = newPrevItemValue;
   this.addItemToSlider(newItemValue, item);
 
-  var onChange = this._view.items[item.name].onChange;
-  onChange(newItemValue);
+  this._view.items[item.name].onChange(newItemValue);
+  this._view.items[prevItem.name].onChange(newPrevItemValue);
 }
 
 Controller.prototype.bindHandle = function (item) {
@@ -173,4 +171,81 @@ Controller.prototype.bindHandle = function (item) {
     fromOnChange(this._model.items[nameFrom].value);
     toOnChange(this._model.items[nameTo].value);
   }
+}
+
+// FIXME: Sync handles data
+Controller.prototype.removeItem = function (name, onRemove) {
+  var removingItemModel = this._model.items[name];
+  var removingItemView = this._view.items[name];
+
+  if (!removingItemModel || !removingItemView) {
+    console.warn('Item ' + name + ' not found');
+    return;
+  }
+
+  var isSingleItem = Object.keys(this._model.items).length === 1;
+
+  if (isSingleItem) {
+
+    this._model.items = {};
+    var line = removingItemView.line;
+    View.removeElement(line);
+
+    onRemove();
+
+    return;
+  }
+
+  var isLastItem = this._view.getLastItemName() === name;
+
+  if (isLastItem) {
+    var handleData = this._view.findHandleDataByToLineName(name);
+    var line = removingItemView.line;
+    var prevItemName = handleData.nameFrom;
+    var valueTo = removingItemModel.value;
+
+    this._view.items[prevItemName]._next = null;
+    this._model.items[prevItemName].value += valueTo;
+
+    this._view.setLineWidth(prevItemName, this._model.total);
+    this._view.items[prevItemName].onChange(this._model.items[prevItemName].value);
+    View.removeElement(handleData.handle);
+    View.removeElement(line);
+
+    this._view.removeFromHandles(handleData);
+
+    delete this._model.items[name];
+    delete this._view.items[name];
+
+    onRemove();
+
+    return;
+  }
+
+  // Generic case
+  var handleData = this._view.findHandleDataByFromLineName(name);
+  var nextItemName = handleData.nameTo;
+  var removingItemValue = removingItemModel.value;
+  var line = removingItemView.line;
+
+  this._model.items[nextItemName].value += removingItemValue;
+
+  this._view.items[nextItemName]._previous = removingItemView._previous;
+
+  var isFirstItem = removingItemView._previous === null;
+
+  if (!isFirstItem) {
+    removingItemView._previous._next = removingItemView._next;
+  }
+
+  this._view.items[nextItemName].onChange(this._model.items[nextItemName].value);
+  this._view.removeFromHandles(handleData);
+  View.removeElement(handleData.handle);
+  View.removeElement(line);
+
+  delete this._model.items[name];
+  delete this._view.items[name];
+
+  onRemove();
+
 }

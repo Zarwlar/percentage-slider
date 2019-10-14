@@ -10,9 +10,19 @@ function Slider(node) {
 }
 
 Slider.prototype.mkOnChange = function (onChange) {
-  return (function (value) {
-    this._wasChanged = true;
-    onChange && onChange(value);
+  return (function (value, options) {
+    var auto = options && options.auto;
+    var isNumber = typeof value === 'number' && !isNaN(value);
+
+    this._wasChanged = auto ? this._wasChanged : true;
+
+    onChange && isNumber && onChange(value);
+  }).bind(this);
+}
+
+Slider.prototype.mkOnRemove = function (onRemove) {
+  return (function () {
+    onRemove && onRemove();
   }).bind(this);
 }
 
@@ -29,7 +39,6 @@ Slider.prototype.addItem = function (name, value, onChange) {
     if (!isNaN(value)) {
       this._wasChanged = true;
     }
-
     return;
   }
 
@@ -54,5 +63,9 @@ Slider.prototype.addItem = function (name, value, onChange) {
 
   this._controller.addItemToSliderAuto(item);
   return;
+}
 
+
+Slider.prototype.removeItem = function (name, onRemove) {
+  this._controller.removeItem(name, this.mkOnRemove(onRemove));
 }

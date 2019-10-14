@@ -7,6 +7,26 @@ function View(node) {
   this.node.appendChild(this.slider, this.node.nextSibling);
 }
 
+View.ids = 0;
+View.createSlider = function () {
+  var slider = document.createElement('div');
+  slider.classList.add('slider');
+  slider.setAttribute('name', 'slider_' + ++View.ids);
+  return slider;
+}
+
+View.removeElement = function (item) {
+  item.parentNode.removeChild(item);
+}
+
+View.prototype.removeFromHandles = function (handle) {
+  var handleIndex = this.handles.findIndex(function (handleData) {
+    return handleData.handle === handle;
+  });
+
+  this.handles.splice(handleIndex, 1);
+}
+
 View.prototype.createLine = function (name) {
   var id = ++this.lineIds;
   var line = document.createElement('div');
@@ -26,7 +46,15 @@ View.prototype.createHandle = function () {
   return handle;
 }
 
-View.prototype.getLastItem = function () {
+View.prototype.appendItem = function (item) {
+  this.slider.insertBefore(item, this.slider.firstChild);
+}
+
+View.prototype.setLineWidth = function (name, value) {
+  this.items[name].line.style.width = value + '%';
+}
+
+View.prototype.getLastItemName = function () {
   var namesPrev = Object.keys(this.items).filter(function (item) {
     return this.items[item]._next === null;
   }, this);
@@ -36,14 +64,6 @@ View.prototype.getLastItem = function () {
   }
 
   return namesPrev[0];
-}
-
-View.prototype.appendItem = function (item) {
-  this.slider.insertBefore(item, this.slider.firstChild);
-}
-
-View.prototype.setLineWidth = function (name, value) {
-  this.items[name].line.style.width = value + '%';
 }
 
 View.prototype.getHandleData = function (handle) {
@@ -58,14 +78,6 @@ View.prototype.getHandleData = function (handle) {
   return this.handles[handleIndex];
 }
 
-View.ids = 0;
-View.createSlider = function () {
-  var slider = document.createElement('div');
-  slider.classList.add('slider');
-  slider.setAttribute('name', 'slider_' + ++View.ids);
-  return slider;
-}
-
 View.prototype.getPercentOf = function (name) {
   var particularLineWidth = this.items[name].line.offsetWidth;
   return this.convertToPercent(particularLineWidth);
@@ -76,7 +88,7 @@ View.prototype.convertToPercent = function (value) {
   return (value * 100) / totalPercent;
 }
 
-View.prototype.findHandleByToLineName = function (name) {
+View.prototype.findHandleDataByToLineName = function (name) {
   var handleIndex = this.handles.findIndex(function (handle) {
     return handle.nameTo === name;
   });
@@ -84,7 +96,7 @@ View.prototype.findHandleByToLineName = function (name) {
   return handleIndex === -1 ? null : this.handles[handleIndex];
 }
 
-View.prototype.findHandleByFromLineName = function (name) {
+View.prototype.findHandleDataByFromLineName = function (name) {
   var handleIndex = this.handles.findIndex(function (handle) {
     return handle.nameFrom === name;
   });
@@ -123,7 +135,7 @@ View.prototype.makeHandleMoveable = function (handle, updateValues) {
 
       function considerLeftEdgeCase() {
         var nameFrom = this.getHandleData.call(this, handle).nameFrom;
-        var prevHandleData = this.findHandleByToLineName.call(this, nameFrom);
+        var prevHandleData = this.findHandleDataByToLineName.call(this, nameFrom);
         var isFirstHandle = prevHandleData === null;
 
         if (!isFirstHandle) {
@@ -153,7 +165,7 @@ View.prototype.makeHandleMoveable = function (handle, updateValues) {
         }
 
         var nameTo = this.getHandleData.call(this, handle).nameTo;
-        var nextHandleData = this.findHandleByFromLineName.call(this, nameTo);
+        var nextHandleData = this.findHandleDataByFromLineName.call(this, nameTo);
         var isLastLine = nextHandleData === null;
 
         if (!isLastLine) {

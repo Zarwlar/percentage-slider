@@ -1,5 +1,6 @@
 var node = document.getElementById('slider-root');
 var addItemBtn = document.getElementById('add-item-btn');
+var removeItemBtn = document.getElementById('remove-item-btn');
 var itemNameInput = document.getElementById('item-name-input');
 var itemValueInput = document.getElementById('item-value-input');
 var itemsList = document.getElementById('items-list');
@@ -11,6 +12,7 @@ addItemBtn.addEventListener('click', function () {
   var value = Number.parseInt(itemValueInput.value, 10);
 
   var fragment = document.createElement('div');
+  fragment.classList.add(name);
 
   var nameFragment = document.createElement('span');
   nameFragment.classList.add('item-name');
@@ -29,4 +31,15 @@ addItemBtn.addEventListener('click', function () {
   function updateValue(value) {
     valueFragment.textContent = value + '%';
   }
-})
+});
+
+removeItemBtn.addEventListener('click', function () {
+  var name = itemNameInput.value;
+
+  slider.removeItem(name, remove);
+
+  function remove() {
+    var removingFragment = document.querySelector('.' + name);
+    removingFragment.parentNode.removeChild(removingFragment);
+  }
+});
