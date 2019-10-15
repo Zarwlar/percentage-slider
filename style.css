@@ -43,34 +43,6 @@
   height: 15px;
 }
 
-.line-1, .line_1 {
-  background: #3F1F2B;
-}
-
-.line-2, .line_2 {
-  background: #DB162F;
-}
-
-.line-3, .line_3 {
-  background: #DBDFAC;
-}
-
-.line-4, .line_4 {
-  background: #5F758E;
-}
-
-.line-5, .line_5 {
-  background: #383961;
-}
-
-.line-5, .line_6 {
-  background: darkcyan;
-}
-
-.line-5, .line_7 {
-  background: #9293A8;
-}
-
 #add-more, #remove {
   margin-top: 20px;
 }

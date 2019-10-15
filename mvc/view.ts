@@ -14,6 +14,15 @@ export default class View {
     return slider;
   }
 
+  public static getRandomColor(): string {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
   public static removeElement(item: HTMLElement): void {
     if (!item.parentNode) { return; }
 
@@ -22,14 +31,12 @@ export default class View {
 
   public node: HTMLElement;
   public slider: HTMLElement;
-  public lineIds: number;
   public items: any;
   public handles: IHandle[];
 
   public constructor(node: HTMLElement) {
     this.node = node;
     this.slider = View.createSlider();
-    this.lineIds = 0;
     this.items = {};
     this.handles = [];
 
@@ -41,18 +48,17 @@ export default class View {
   }
 
   public createLine(name: string): HTMLElement {
-    var id = ++this.lineIds;
-    var line = document.createElement('div');
+    const line = document.createElement('div');
 
     line.setAttribute('name', name);
     line.classList.add('line');
-    line.classList.add('line_' + id);
+    line.style.background = View.getRandomColor();
 
     return line;
   }
 
   public createHandle(): HTMLElement {
-    var handle = document.createElement('div');
+    const handle = document.createElement('div');
 
     handle.classList.add('handle');
 
