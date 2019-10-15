@@ -11,8 +11,8 @@ const itemsList = document.getElementById('items-list')!;
 const slider = new Slider(node);
 
 addItemBtn.addEventListener('click', function () {
-  var name = itemNameInput.value;
-  var value = Number.parseInt(itemValueInput.value, 10);
+  const name = itemNameInput.value;
+  const value = Number.parseInt(itemValueInput.value, 10);
 
   const fragment = createSegmentValueView(name, value);
   const valueFragment = fragment.querySelector('.item-value')!;
@@ -25,12 +25,12 @@ addItemBtn.addEventListener('click', function () {
 });
 
 removeItemBtn.addEventListener('click', function () {
-  var name = itemNameInput.value;
+  const name = itemNameInput.value;
 
   slider.removeItem(name, remove);
 
   function remove() {
-    var removingFragment = document.querySelector('.' + name);
+    const removingFragment = document.querySelector('.' + name);
 
     if (!removingFragment || !removingFragment.parentNode) { return; }
 
@@ -39,7 +39,7 @@ removeItemBtn.addEventListener('click', function () {
 });
 
 addSetOfItemsBtn.addEventListener('click', function () {
-  var itemsData = [
+  const itemsData = [
     { name: 'a', value: 15, onChange: undefined },
     { name: 'b', value: 60, onChange: undefined },
     { name: 'c', value: 15, onChange: undefined },
@@ -71,14 +71,14 @@ addSetOfItemsBtn.addEventListener('click', function () {
 });
 
 function createSegmentValueView(name: string, value: number) {
-  var fragment = document.createElement('div');
+  const fragment = document.createElement('div');
   fragment.classList.add(name);
 
-  var nameFragment = document.createElement('span');
+  const nameFragment = document.createElement('span');
   nameFragment.classList.add('item-name');
   nameFragment.textContent = name;
 
-  var valueFragment = document.createElement('span');
+  const valueFragment = document.createElement('span');
   valueFragment.classList.add('item-value');
   valueFragment.textContent = String(value);
 
