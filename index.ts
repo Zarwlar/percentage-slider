@@ -22,7 +22,7 @@ export default class Slider {
     this._controller = new Controller(this._model, this._view);
   }
 
-  public mkOnChange(onChange: (value: number) => void) {
+  public mkOnChange(onChange?: (value: number) => void): () => void {
     return ((value: number, options: { auto: boolean }) => {
       var auto = options && options.auto;
       var isNumber = typeof value === 'number' && !isNaN(value);
@@ -33,13 +33,13 @@ export default class Slider {
     }).bind(this);
   }
 
-  public mkOnRemove(onRemove: () => void) {
+  public mkOnRemove(onRemove: () => void): () => void {
     return (function () {
       onRemove && onRemove();
     }).bind(this);
   }
 
-  public addItem(name: string, value: number, onChange: (value: number) => void) {
+  public addItem(name: string, value: number, onChange: (value: number) => void): void {
     if (!this._model.isValidValue(value)) {
       throw new Error("Total can't be greater than " + this._model.total);
     }
@@ -77,7 +77,7 @@ export default class Slider {
     return;
   }
 
-  public addItems = function (itemsData: IItemData[], options?: IAddItemsOptions) {
+  public addItems(itemsData: IItemData[], options?: IAddItemsOptions): void {
 
     const force = options && options.force;
 
@@ -114,7 +114,7 @@ export default class Slider {
     this._controller.addItemsToSlider(items);
   }
 
-  public removeItem(name: string, onRemove: () => void) {
+  public removeItem(name: string, onRemove: () => void): void {
     this._controller.removeItem(name, this.mkOnRemove(onRemove));
   }
 }

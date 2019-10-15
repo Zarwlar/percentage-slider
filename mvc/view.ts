@@ -7,14 +7,14 @@ interface IHandle {
 export default class View {
   public static ids: number = 0;
 
-  public static createSlider() {
+  public static createSlider(): HTMLElement {
     var slider = document.createElement('div');
     slider.classList.add('slider');
     slider.setAttribute('name', 'slider_' + ++View.ids);
     return slider;
   }
 
-  public static removeElement(item: HTMLElement) {
+  public static removeElement(item: HTMLElement): void {
     if (!item.parentNode) { return; }
 
     item.parentNode.removeChild(item);
@@ -36,11 +36,11 @@ export default class View {
     this.node.appendChild(this.slider);
   }
 
-  public removeFromHandles(handle: HTMLElement) {
+  public removeFromHandles(handle: HTMLElement): void {
     this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
   }
 
-  public createLine(name: string) {
+  public createLine(name: string): HTMLElement {
     var id = ++this.lineIds;
     var line = document.createElement('div');
 
@@ -51,7 +51,7 @@ export default class View {
     return line;
   }
 
-  public createHandle() {
+  public createHandle(): HTMLElement {
     var handle = document.createElement('div');
 
     handle.classList.add('handle');
@@ -59,15 +59,15 @@ export default class View {
     return handle;
   }
 
-  public appendItem(item: HTMLElement) {
+  public appendItem(item: HTMLElement): void {
     this.slider.insertBefore(item, this.slider.firstChild);
   }
 
-  public setLineWidth(name: string, value: number) {
+  public setLineWidth(name: string, value: number): void {
     this.items[name].line.style.width = `${value}%`;
   }
 
-  public getLastItemName() {
+  public getLastItemName(): string {
     const namesPrev = Object
       .keys(this.items)
       .filter(item => this.items[item]._next === null, this);
@@ -79,7 +79,7 @@ export default class View {
     return namesPrev[0];
   }
 
-  public getHandleData(handle: HTMLElement) {
+  public getHandleData(handle: HTMLElement): IHandle {
     const handleIndex = this.handles.findIndex(
       handleData => handleData.handle === handle
     );
@@ -91,17 +91,17 @@ export default class View {
     return this.handles[handleIndex];
   }
 
-  public getPercentOf(name: string) {
+  public getPercentOf(name: string): number {
     const particularLineWidth = this.items[name].line.offsetWidth;
     return this.convertToPercent(particularLineWidth);
   }
 
-  public convertToPercent(value: number) {
+  public convertToPercent(value: number): number {
     const totalPercent = this.slider.offsetWidth;
     return (value * 100) / totalPercent;
   }
 
-  public findHandleDataByToLineName(name: string) {
+  public findHandleDataByToLineName(name: string): null | IHandle {
     const handleIndex = this.handles.findIndex(handle => {
       return handle.nameTo === name;
     });
@@ -109,7 +109,7 @@ export default class View {
     return handleIndex === -1 ? null : this.handles[handleIndex];
   }
 
-  public findHandleDataByFromLineName(name: string) {
+  public findHandleDataByFromLineName(name: string): null | IHandle {
     const handleIndex = this.handles.findIndex(handle => {
       return handle.nameFrom === name;
     });
@@ -117,7 +117,7 @@ export default class View {
     return handleIndex === -1 ? null : this.handles[handleIndex];
   }
 
-  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void) {
+  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
 
     handle.onmousedown = (event) => {
       event.preventDefault();

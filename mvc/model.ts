@@ -34,7 +34,7 @@ export default class Model {
     return values;
   }
 
-  public getSumOfItems() {
+  public getSumOfItems(): number {
     return Object
       .keys(this.items)
       .reduce((acc, item) => {
@@ -43,16 +43,16 @@ export default class Model {
       }, 0);
   }
 
-  public isValidValue(value: number) {
+  public isValidValue(value: number): boolean {
     var value = isNaN(value) ? 0 : value;
     return this.getSumOfItems() + value <= this.total;
   }
 
-  public hasNoItems() {
+  public hasNoItems(): boolean {
     return Object.keys(this.items).length === 0;
   }
 
-  public makeSumEqualTotal(items: IItemData[], sum: number) {
+  public makeSumEqualTotal(items: IItemData[], sum: number): void {
     const deficit = this.total - sum;
     const lastIndex = items.length - 1;
     items[lastIndex].value = (items[lastIndex].value || 0) + deficit;

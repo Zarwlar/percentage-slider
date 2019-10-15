@@ -21,8 +21,6 @@ interface ISingleItem {
   value: number;
 }
 
-type TSetOfItems = Array<IItem> & { '0': ISingleItem };
-
 type TOnChange = (ids: number, params: { auto: boolean }) => void;
 
 export default class Controller {
@@ -92,7 +90,7 @@ export default class Controller {
     return { name, line, handle };
   }
 
-  public createItems = function (items: IItemData[]) {
+  public createItems = function (items: IItemData[]): IItem | IItem[] {
     if (items.length === 1) {
       return this.createSingleItem(items[0]);
     }
@@ -103,11 +101,10 @@ export default class Controller {
       return this.createItem(itemData.name, itemData.value, itemData.onChange);
     }, this);
 
-    const result = [singleLineItem].concat(restItems);
-    return result;
+    return [singleLineItem].concat(restItems);
   }
 
-  public divideSliderIntoEqualParts() {
+  public divideSliderIntoEqualParts(): void {
     var names = Object.keys(this._model.items);
     var amount = names.length;
     var diffs = this._model.getEqualParts(amount);
@@ -135,7 +132,7 @@ export default class Controller {
 
   }
 
-  public addItemToSlider(value: number, item: IItem) {
+  public addItemToSlider(value: number, item: IItem): void {
     var aggregation = Object.keys(this._model.items).reduce((acc, curr) => {
       return acc + this._model.items[curr].value;
     }, 0);
@@ -148,7 +145,13 @@ export default class Controller {
     this._view.items[item.name].onChange(value);
   }
 
-  public addItemsToSlider(items: TSetOfItems) {
+  public addItemsToSlider(items: IItem | IItem[]): void {
+
+    if (!Array.isArray(items)) {
+      this._view.appendItem(items.line);
+      return;
+    }
+
     var singleLine = items[0];
     this._view.appendItem(singleLine.line);
 
@@ -207,7 +210,7 @@ export default class Controller {
     this._view.items[prevItem.name].onChange(newPrevItemValue);
   }
 
-  public bindHandle(item: IItem) {
+  public bindHandle(item: IItem): void {
     const handle = item.handle;
     const prevItem = this._view.items[item.name]._previous;
 
@@ -245,7 +248,7 @@ export default class Controller {
     this._view.makeHandleMoveable(handle, updateValues);
   }
 
-  public removeItem(name: string, onRemove: () => void) {
+  public removeItem(name: string, onRemove: () => void): void {
     var removingItemModel = this._model.items[name];
     var removingItemView = this._view.items[name];
 
