@@ -17,6 +17,39 @@
   border-bottom-right-radius: 5px;
 }
 
+#items-list {
+  display: flex;
+  margin-top: 20px;
+}
+
+.item-view {
+  margin-right: 5px;
+  padding: 20px;
+  border: 1px solid darkgray;
+  display: flex;
+  flex-direction: column;
+}
+
+.btn, .btn_remove {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 5px 5px;
+  text-align: center;
+  border-radius: 5px;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+}
+
+.btn_remove {
+  background-color: rgb(198, 32, 59);
+}
+
+.remove-item-container {
+  margin: 10px auto 0 auto;
+}
+
 .item-name {
   margin-right: 10px;
   font-weight: bold;

@@ -33,7 +33,7 @@ export default class Slider {
     }).bind(this);
   }
 
-  public mkOnRemove(onRemove: () => void): () => void {
+  public mkOnRemove(onRemove?: () => void): () => void {
     return (function () {
       onRemove && onRemove();
     }).bind(this);
@@ -121,7 +121,7 @@ export default class Slider {
     this._controller.addItemsToSlider(items);
   }
 
-  public removeItem(name: string, onRemove: () => void): void {
+  public removeItem(name: string, onRemove?: () => void): void {
     this._controller.removeItem(name, this.mkOnRemove(onRemove));
   }
 }

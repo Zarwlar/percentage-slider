@@ -2,7 +2,6 @@ import Slider from './index';
 
 const node = document.getElementById('slider-root')!;
 const addItemBtn = document.getElementById('add-item-btn')!;
-const removeItemBtn = document.getElementById('remove-item-btn')!;
 const addSetOfItemsBtn = document.getElementById('add-set-of-items')!;
 const itemNameInput = document.getElementById('item-name-input')! as HTMLInputElement;
 const itemValueInput = document.getElementById('item-value-input')! as HTMLInputElement;
@@ -29,20 +28,6 @@ addItemBtn.addEventListener('click', function () {
 
   function updateValue(value: number) {
     valueFragment.textContent = value + '%';
-  }
-});
-
-removeItemBtn.addEventListener('click', function () {
-  const name = itemNameInput.value;
-
-  slider.removeItem(name, remove);
-
-  function remove() {
-    const removingFragment = document.querySelector('.' + name);
-
-    if (!removingFragment || !removingFragment.parentNode) { return; }
-
-    removingFragment.parentNode.removeChild(removingFragment);
   }
 });
 
@@ -91,6 +76,25 @@ addSetOfItemsBtn.addEventListener('click', function () {
 function createSegmentValueView(name: string, value: number, color: string) {
   const fragment = document.createElement('div');
   fragment.classList.add(name);
+  fragment.classList.add('item-view');
+
+  const dataContainer = document.createElement('div');
+  dataContainer.classList.add('data-container');
+
+  const removeItemContainer = document.createElement('div');
+  removeItemContainer.classList.add('remove-item-container');
+
+  const removeButton = document.createElement('button');
+  removeButton.textContent = `Remove item`;
+  removeButton.classList.add('btn_remove');
+
+  removeButton.addEventListener('click', function () {
+    slider.removeItem(name, () => {
+      fragment.remove();
+    });
+  });
+
+  removeItemContainer.appendChild(removeButton);
 
   const nameFragment = document.createElement('span');
   nameFragment.classList.add('item-name');
@@ -101,8 +105,12 @@ function createSegmentValueView(name: string, value: number, color: string) {
   valueFragment.classList.add('item-value');
   valueFragment.textContent = String(value);
 
-  fragment.appendChild(nameFragment);
-  fragment.appendChild(valueFragment)
+  dataContainer.append(nameFragment);
+  dataContainer.append(valueFragment);
+
+  fragment.appendChild(dataContainer);
+  fragment.appendChild(removeItemContainer);
+
   itemsList.appendChild(fragment);
 
   return fragment;
