@@ -47,12 +47,12 @@ export default class View {
     this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
   }
 
-  public createLine(name: string): HTMLElement {
+  public createLine(name: string, color: string): HTMLElement {
     const line = document.createElement('div');
 
     line.setAttribute('name', name);
     line.classList.add('line');
-    line.style.background = View.getRandomColor();
+    line.style.background = color;
 
     return line;
   }

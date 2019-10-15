@@ -32,12 +32,12 @@ export default class Controller {
     this._view = view;
   }
 
-  public createSingleItem(name: string, value: number, onChange: TOnChange): ISingleItem {
+  public createSingleItem(name: string, value: number, onChange: TOnChange, color: string): ISingleItem {
     if (!name || name.trim() === '') {
       throw new Error('Name must be provided!');
     }
 
-    const line = this._view.createLine(name);
+    const line = this._view.createLine(name, color);
     const itemView: IItemView = {
       name: name,
       line: line,
@@ -65,8 +65,8 @@ export default class Controller {
     };
   }
 
-  public createItem(name: string, value: number, onChange: TOnChange): IItem {
-    const line = this._view.createLine(name);
+  public createItem(name: string, value: number, onChange: TOnChange, color: string): IItem {
+    const line = this._view.createLine(name, color);
     const namePrev = this._view.getLastItemName();
 
     this._model.items[name] = {
@@ -96,9 +96,9 @@ export default class Controller {
     }
 
     const firstItemData = items[0];
-    const singleLineItem = this.createSingleItem(firstItemData.name, firstItemData.value, firstItemData.onChange);
+    const singleLineItem = this.createSingleItem(firstItemData.name, firstItemData.value, firstItemData.onChange, firstItemData.color);
     const restItems = items.slice(1).map(function (itemData) {
-      return this.createItem(itemData.name, itemData.value, itemData.onChange);
+      return this.createItem(itemData.name, itemData.value, itemData.onChange, itemData.color);
     }, this);
 
     return [singleLineItem].concat(restItems);

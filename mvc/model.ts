@@ -7,6 +7,7 @@ export interface IItemData {
   name: string;
   value?: number;
   onChange?: (value: number) => void;
+  color?: string;
 }
 
 export default class Model {
@@ -43,9 +44,9 @@ export default class Model {
       }, 0);
   }
 
-  public isValidValue(value: number): boolean {
-    var value = isNaN(value) ? 0 : value;
-    return this.getSumOfItems() + value <= this.total;
+  public isValidValue(value?: number): boolean {
+    var value = value && isNaN(value) ? 0 : value;
+    return this.getSumOfItems() + (value || 0) <= this.total;
   }
 
   public hasNoItems(): boolean {

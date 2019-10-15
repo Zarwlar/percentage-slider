@@ -39,7 +39,9 @@ export default class Slider {
     }).bind(this);
   }
 
-  public addItem(name: string, value: number, onChange: (value: number) => void): void {
+  public addItem(itemData: IItemData): void {
+    const { value, onChange, name, color } = itemData;
+
     if (!this._model.isValidValue(value)) {
       throw new Error("Total can't be greater than " + this._model.total);
     }
@@ -52,18 +54,18 @@ export default class Slider {
 
     if (this._model.hasNoItems()) {
       const validValue = Number.parseInt(`${value}`, 10) || this._model.total;
-      const item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange));
+      const item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange), color || View.getRandomColor());
       this._view.appendItem(item.line);
 
-      if (!isNaN(value)) {
+      if (value && !isNaN(value)) {
         this._wasChanged = true;
       }
       return;
     }
 
-    const item = this._controller.createItem(name, value, this.mkOnChange(onChange));
+    const item = this._controller.createItem(name, (value || 0), this.mkOnChange(onChange), color || View.getRandomColor());
 
-    if (!isNaN(value)) {
+    if (value && !isNaN(value)) {
       this._wasChanged = true;
       this._controller.addItemToSlider(value, item);
       return;
@@ -105,8 +107,7 @@ export default class Slider {
 
     let convertedItems = itemsData.map((itemData: IItemData) => {
       return {
-        name: itemData.name,
-        value: itemData.value,
+        ...itemData,
         onChange: this.mkOnChange(itemData.onChange),
       };
     });
