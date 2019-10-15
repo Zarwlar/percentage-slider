@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node_modules/.bin/parcel ./index.html --public-url ./",
+    "build-prod": "node_modules/.bin/parcel build -d ./production ./index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
