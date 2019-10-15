@@ -3,6 +3,12 @@ export interface IItemModel {
   value: number;
 }
 
+export interface IItemData {
+  name: string;
+  value?: number;
+  onChange?: (value: number) => void;
+}
+
 export default class Model {
   public items: Record<string, IItemModel> = {};
   public total: number = 100;
@@ -44,5 +50,11 @@ export default class Model {
 
   public hasNoItems() {
     return Object.keys(this.items).length === 0;
+  }
+
+  public makeSumEqualTotal(items: IItemData[], sum: number) {
+    const deficit = this.total - sum;
+    const lastIndex = items.length - 1;
+    items[lastIndex].value = (items[lastIndex].value || 0) + deficit;
   }
 }

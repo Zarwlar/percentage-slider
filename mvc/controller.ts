@@ -1,4 +1,4 @@
-import Model, { IItemModel } from './model';
+import Model, { IItemModel, IItemData } from './model';
 import View from './view';
 
 interface IItemView {
@@ -15,6 +15,14 @@ interface IItem {
   handle: HTMLElement;
 }
 
+interface ISingleItem {
+  line: HTMLElement;
+  name: string;
+  value: number;
+}
+
+type TSetOfItems = Array<IItem> & { '0': ISingleItem };
+
 type TOnChange = (ids: number, params: { auto: boolean }) => void;
 
 export default class Controller {
@@ -26,7 +34,7 @@ export default class Controller {
     this._view = view;
   }
 
-  public createSingleItem(name: string, value: number, onChange: TOnChange) {
+  public createSingleItem(name: string, value: number, onChange: TOnChange): ISingleItem {
     if (!name || name.trim() === '') {
       throw new Error('Name must be provided!');
     }
@@ -50,15 +58,18 @@ export default class Controller {
 
     this._model.items[name] = itemModel;
 
-    var nValue = Number(value);
-    onChange(nValue, { auto: nValue === this._model.total });
+    onChange(value, { auto: value === this._model.total });
 
-    return line;
+    return {
+      line,
+      name: name,
+      value: value,
+    };
   }
 
   public createItem(name: string, value: number, onChange: TOnChange): IItem {
-    var line = this._view.createLine(name);
-    var namePrev = this._view.getLastItemName();
+    const line = this._view.createLine(name);
+    const namePrev = this._view.getLastItemName();
 
     this._model.items[name] = {
       name: name,
@@ -75,10 +86,25 @@ export default class Controller {
 
     this._view.items[namePrev]._next = this._view.items[name];
 
-    var handle = this._view.createHandle();
+    const handle = this._view.createHandle();
     this._view.handles.push({ handle: handle, nameFrom: namePrev, nameTo: name });
 
     return { name, line, handle };
+  }
+
+  public createItems = function (items: IItemData[]) {
+    if (items.length === 1) {
+      return this.createSingleItem(items[0]);
+    }
+
+    const firstItemData = items[0];
+    const singleLineItem = this.createSingleItem(firstItemData.name, firstItemData.value, firstItemData.onChange);
+    const restItems = items.slice(1).map(function (itemData) {
+      return this.createItem(itemData.name, itemData.value, itemData.onChange);
+    }, this);
+
+    const result = [singleLineItem].concat(restItems);
+    return result;
   }
 
   public divideSliderIntoEqualParts() {
@@ -110,9 +136,8 @@ export default class Controller {
   }
 
   public addItemToSlider(value: number, item: IItem) {
-    var _this = this;
-    var aggregation = Object.keys(this._model.items).reduce(function (acc, curr) {
-      return acc + _this._model.items[curr].value;
+    var aggregation = Object.keys(this._model.items).reduce((acc, curr) => {
+      return acc + this._model.items[curr].value;
     }, 0);
 
     this._view.setLineWidth(item.name, aggregation);
@@ -121,6 +146,30 @@ export default class Controller {
     this._view.appendItem(item.line);
 
     this._view.items[item.name].onChange(value);
+  }
+
+  public addItemsToSlider(items: TSetOfItems) {
+    var singleLine = items[0];
+    this._view.appendItem(singleLine.line);
+
+    items.forEach((item, index, arr) => {
+      const isSingleLine = index === 0;
+      if (isSingleLine) {
+        return;
+      }
+
+      var itemName = item.name;
+      var value = this._model.items[itemName].value;
+      var prevName = arr[index - 1].name;
+      var prevLineWidth = this._view.getPercentOf(prevName);
+
+      this._view.setLineWidth(item.name, value + prevLineWidth);
+      this._view.appendItem(item.handle);
+      this.bindHandle(item);
+      this._view.appendItem(item.line);
+
+      this._view.items[itemName].onChange(value);
+    });
   }
 
   public addItemToSliderAuto(item: IItem): void {
