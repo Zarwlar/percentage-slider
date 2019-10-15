@@ -44,6 +44,12 @@ export default class Slider {
       throw new Error("Total can't be greater than " + this._model.total);
     }
 
+    const hasNameAlreadyTaken = this._model.items[name];
+
+    if (hasNameAlreadyTaken) {
+      throw new Error(`Name '${name}' has already taken`);
+    }
+
     if (this._model.hasNoItems()) {
       const validValue = Number.parseInt(`${value}`, 10) || this._model.total;
       const item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange));
