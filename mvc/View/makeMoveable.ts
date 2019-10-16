@@ -123,6 +123,8 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
 
     handle.onmousedown = (event) => {
       event.preventDefault();
+      const marginLeft = getComputedStyle(this.view.slider.parentElement!).marginLeft;
+      const marginLeftInt = parseInt(marginLeft || '0', 10);
       const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
       const longestLineWidth = parseFloat(sliderWidthStr || '');
       const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
@@ -170,10 +172,10 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
 
           if (!isLastLine && nextHandleData) {
             const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0');
+            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0') + marginLeftInt;
 
             if (newLeft > nextHandleLeft) {
-              newLeft = nextHandleLeft;
+              newLeft = (nextHandleLeft - marginLeftInt);
               return;
             }
           }
