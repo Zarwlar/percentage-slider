@@ -5,7 +5,6 @@ export interface IMakeHandleMovable {
   view: View;
 }
 
-// FIXME: Doesn't work correctly
 export class MakeHandleMoveableMobile implements IMakeHandleMovable {
 
   public view: View;
@@ -17,7 +16,9 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
     }
 
     handle.ontouchstart = (event) => {
-      event.preventDefault();
+      if (event.cancelable) {
+        event.preventDefault();
+      }
 
       const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
       const longestLineWidth = parseFloat(sliderWidthStr || '');
@@ -96,8 +97,8 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
       }
 
       const onTouchEnd = () => {
-        document.removeEventListener('mouseup', onTouchEnd);
-        document.removeEventListener('mousemove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+        document.removeEventListener('touchmove', onTouchMove);
       }
 
       document.addEventListener('touchmove', onTouchMove);

@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+#slider-root {
+  max-width: 1200px;
+}
+
 #slider, .slider {
   position: relative;
   border-radius: 5px;
@@ -66,10 +70,10 @@
 }
 
 .handle {
-  width: 4px;
-  border: 1px solid white;
+  width: 8px;
+  border: 1px dotted white;
   height: 25px;
-  border-radius: 3px;
+  border-radius: 5px;
   position: absolute;
   top: -5px;
   background: darkgray;
