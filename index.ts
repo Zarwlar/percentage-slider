@@ -1,6 +1,7 @@
 import Model, { IItemData } from './mvc/model';
-import View from './mvc/view';
+import View from './mvc/View/view';
 import Controller from './mvc/controller';
+import MakeMoveable, { IMakeHandleMovable } from './mvc/View/makeMoveable';
 
 interface IAddItemsOptions {
   force?: boolean;
@@ -10,6 +11,7 @@ export default class Slider {
   private _model: Model;
   private _view: View;
   private _controller: Controller;
+  private _makeMoveable: IMakeHandleMovable;
   private _wasChanged = false;
 
   public constructor(node: HTMLElement | null) {
@@ -18,7 +20,9 @@ export default class Slider {
     }
 
     this._model = new Model();
-    this._view = new View(node);
+    this._makeMoveable = new MakeMoveable();
+    this._view = new View(node, this._makeMoveable);
+    this._makeMoveable.view = this._view;
     this._controller = new Controller(this._model, this._view);
   }
 

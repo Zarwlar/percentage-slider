@@ -19,12 +19,18 @@
 
 #items-list {
   display: flex;
+  flex-wrap: wrap;
   margin-top: 20px;
+}
+
+.data-container {
+  text-align: center;
 }
 
 .item-view {
   margin-right: 5px;
   padding: 20px;
+  width: 150px;
   border: 1px solid darkgray;
   display: flex;
   flex-direction: column;
