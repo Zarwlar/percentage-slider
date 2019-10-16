@@ -1,4 +1,4 @@
-import Slider from './index';
+import PercentageSlider from './index';
 import 'mdn-polyfills/Array.prototype.findIndex';
 import 'mdn-polyfills/Node.prototype.remove';
 
@@ -9,7 +9,7 @@ const itemNameInput = document.getElementById('item-name-input')! as HTMLInputEl
 const itemValueInput = document.getElementById('item-value-input')! as HTMLInputElement;
 const itemsList = document.getElementById('items-list')!;
 
-const slider = new Slider(node);
+const slider = new PercentageSlider(node);
 
 addItemBtn.addEventListener('click', function () {
   const name = itemNameInput.value;

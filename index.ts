@@ -2,12 +2,13 @@ import Model, { IItemData } from './mvc/model';
 import View from './mvc/View/view';
 import Controller from './mvc/controller';
 import MakeMoveable, { IMakeHandleMovable } from './mvc/View/makeMoveable';
+import './percentage-slider.css';
 
 interface IAddItemsOptions {
   force?: boolean;
 }
 
-export default class Slider {
+export default class PercentageSlider {
   private _model: Model;
   private _view: View;
   private _controller: Controller;
@@ -129,3 +130,5 @@ export default class Slider {
     this._controller.removeItem(name, this.mkOnRemove(onRemove));
   }
 }
+
+(window as any).PercentageSlider = PercentageSlider;
