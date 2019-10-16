@@ -200,7 +200,7 @@ export default class Controller {
     var newPrevItemValue = Math.floor(prevDividedInto2);
     var newItemValue = Math.ceil(prevDividedInto2);
 
-    prevItem.line.style.width = Number.parseInt(prevItem.line.style.width) - newItemValue + '%';
+    prevItem.line.style.width = parseInt(prevItem.line.style.width) - newItemValue + '%';
 
     this._model.items[item.name].value = newItemValue;
     this._model.items[prevItem.name].value = newPrevItemValue;
@@ -287,7 +287,7 @@ export default class Controller {
       this._model.items[prevItemName].value += valueTo;
 
       this._view.setLineWidth(prevItemName, this._model.total);
-      this._view.items[prevItemName].onChange(this._model.items[prevItemName].value);
+      this._view.items[prevItemName].onChange(this._model.items[prevItemName].value, { auto: true });
 
       if (handleData) {
         View.removeElement(handleData.handle);
