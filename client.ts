@@ -1,4 +1,6 @@
 import Slider from './index';
+import 'mdn-polyfills/Array.prototype.findIndex';
+import 'mdn-polyfills/Node.prototype.remove';
 
 const node = document.getElementById('slider-root')!;
 const addItemBtn = document.getElementById('add-item-btn')!;
@@ -11,7 +13,7 @@ const slider = new Slider(node);
 
 addItemBtn.addEventListener('click', function () {
   const name = itemNameInput.value;
-  const value = Number.parseInt(itemValueInput.value, 10);
+  const value = parseInt(itemValueInput.value, 10);
   const color = getRandomColor();
 
   const fragment = createSegmentValueView(name, value, color);
@@ -105,8 +107,8 @@ function createSegmentValueView(name: string, value: number, color: string) {
   valueFragment.classList.add('item-value');
   valueFragment.textContent = String(value);
 
-  dataContainer.append(nameFragment);
-  dataContainer.append(valueFragment);
+  dataContainer.appendChild(nameFragment);
+  dataContainer.appendChild(valueFragment);
 
   fragment.appendChild(dataContainer);
   fragment.appendChild(removeItemContainer);

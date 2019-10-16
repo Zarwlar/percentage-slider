@@ -53,7 +53,7 @@ export default class Slider {
     }
 
     if (this._model.hasNoItems()) {
-      const validValue = Number.parseInt(`${value}`, 10) || this._model.total;
+      const validValue = parseInt(`${value}`, 10) || this._model.total;
       const item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange), color || View.getRandomColor());
       this._view.appendItem(item.line);
 

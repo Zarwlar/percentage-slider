@@ -129,7 +129,7 @@ export default class View {
       event.preventDefault();
 
       const sliderWidthStr = this.slider.firstChild ? getComputedStyle(this.slider.firstChild as Element).width : '0';
-      const longestLineWidth = Number.parseFloat(sliderWidthStr || '');
+      const longestLineWidth = parseFloat(sliderWidthStr || '');
       const longestLinePercent = Math.round(this.convertToPercent(longestLineWidth));
 
       const isPartialFilledSlider = longestLinePercent !== 100;
@@ -145,7 +145,7 @@ export default class View {
 
           if (!isFirstHandle) {
             const prevHandle = prevHandleData && prevHandleData.handle;
-            const prevHandleLeft = prevHandle && Number.parseFloat(getComputedStyle(prevHandle).left || '0') || 0;
+            const prevHandleLeft = prevHandle && parseFloat(getComputedStyle(prevHandle).left || '0') || 0;
 
             if (newLeft < prevHandleLeft) {
               newLeft = prevHandleLeft;
@@ -175,7 +175,7 @@ export default class View {
 
           if (!isLastLine) {
             const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = Number.parseFloat(getComputedStyle(nextHandle).left || '0');
+            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0');
 
             if (newLeft > nextHandleLeft) {
               newLeft = nextHandleLeft;
@@ -194,7 +194,7 @@ export default class View {
         considerLeftEdgeCase();
         considerRightEdgeCase();
 
-        const curLeft = Number.parseFloat(getComputedStyle(handle).left || '0');
+        const curLeft = parseFloat(getComputedStyle(handle).left || '0');
         const newLeftInPercent = Math.round(this.convertToPercent(newLeft));
         const oldLeftInPercent = Math.round(this.convertToPercent(curLeft));
 
