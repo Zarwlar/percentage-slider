@@ -1,13 +1,5 @@
 import Model, { IItemModel, IItemData } from './model';
-import View from './View/view';
-
-interface IItemView {
-  name: string;
-  line: HTMLElement;
-  onChange: TOnChange;
-  _next: null;
-  _previous: null;
-}
+import View, { IItemView } from './View/view';
 
 interface IItem {
   name: string;
@@ -109,16 +101,16 @@ export default class Controller {
   }
 
   public divideSliderIntoEqualParts(): void {
-    var names = Object.keys(this._model.items);
-    var amount = names.length;
-    var diffs = this._model.getEqualParts(amount);
+    const names = Object.keys(this._model.items);
+    const amount = names.length;
+    const diffs = this._model.getEqualParts(amount);
 
     names.forEach(function (name, index) {
       this._model.items[name].value = diffs[index];
-      var onChange = this._view.items[name].onChange;
+      const onChange = this._view.items[name].onChange;
       onChange(diffs[index], { auto: true });
 
-      var aggregate = diffs
+      const aggregate = diffs
         .slice(0, index + 1)
         .reduce(function (acc, curr) { return acc + curr }, 0);
       this._view.setLineWidth(name, aggregate);
@@ -126,7 +118,7 @@ export default class Controller {
     }, this);
 
     this._view.handles.forEach(function (handleData) {
-      var item = {
+      const item = {
         handle: handleData.handle,
         name: handleData.nameTo,
       };
@@ -137,7 +129,7 @@ export default class Controller {
   }
 
   public addItemToSlider(value: number, item: IItem): void {
-    var aggregation = Object.keys(this._model.items).reduce((acc, curr) => {
+    const aggregation = Object.keys(this._model.items).reduce((acc, curr) => {
       return acc + this._model.items[curr].value;
     }, 0);
 
@@ -165,10 +157,10 @@ export default class Controller {
         return;
       }
 
-      var itemName = item.name;
-      var value = this._model.items[itemName].value;
-      var prevName = arr[index - 1].name;
-      var prevLineWidth = this._view.getPercentOf(prevName);
+      const itemName = item.name;
+      const value = this._model.items[itemName].value;
+      const prevName = arr[index - 1].name;
+      const prevLineWidth = this._view.getPercentOf(prevName);
 
       this._view.setLineWidth(item.name, value + prevLineWidth);
       this._view.appendItem(item.handle);
@@ -186,7 +178,7 @@ export default class Controller {
   }
 
   public addItemToSliderGreedy(item: IItem): void {
-    var emptySpace = this._model.total - this._model.getSumOfItems();
+    const emptySpace = this._model.total - this._model.getSumOfItems();
     this._model.items[item.name].value = emptySpace;
     this._view.setLineWidth(item.name, this._model.total);
     this._view.appendItem(item.handle);
@@ -197,31 +189,37 @@ export default class Controller {
   }
 
   public addItemToSliderBySplitLastItem(item: IItem): void {
-    var prevItem = this._view.items[item.name]._previous;
-    var prevItemValue = this._model.items[prevItem.name].value;
+    const prevItem = this._view.items[item.name]._previous;
+    const prevItemValue = prevItem && this._model.items[prevItem.name].value || 0;
 
-    var prevDividedInto2 = prevItemValue / 2;
-    var newPrevItemValue = Math.floor(prevDividedInto2);
-    var newItemValue = Math.ceil(prevDividedInto2);
+    const prevDividedInto2 = prevItemValue / 2;
+    const newPrevItemValue = Math.floor(prevDividedInto2);
+    const newItemValue = Math.ceil(prevDividedInto2);
 
-    prevItem.line.style.width = parseInt(prevItem.line.style.width) - newItemValue + '%';
+    if (prevItem && prevItem.line) {
+      prevItem.line.style.width = parseInt(prevItem.line.style.width || '0') - newItemValue + '%';
+    }
 
     this._model.items[item.name].value = newItemValue;
-    this._model.items[prevItem.name].value = newPrevItemValue;
+
+    if (prevItem) {
+      this._model.items[prevItem.name].value = newPrevItemValue;
+    }
+
     this.addItemToSlider(newItemValue, item);
 
     this._view.items[item.name].onChange(newItemValue);
-    this._view.items[prevItem.name].onChange(newPrevItemValue);
+    prevItem && this._view.items[prevItem.name].onChange(newPrevItemValue);
   }
 
   public bindHandle(item: IItem): void {
     const handle = item.handle;
     const prevItem = this._view.items[item.name]._previous;
 
-    handle.style.left = Math.round(this._view.getPercentOf(prevItem.name)) + '%';
+    handle.style.left = prevItem && Math.round(this._view.getPercentOf(prevItem.name)) + '%';
 
     const updateValues = (oldHandleLeft: number, newHandleLeft: number) => {
-      var handleDataIndex = this._view.handles.findIndex(function (handleData) {
+      const handleDataIndex = this._view.handles.findIndex(function (handleData) {
         return handleData.handle === handle;
       });
 
@@ -229,10 +227,10 @@ export default class Controller {
         throw new Error("Can't find handle");
       }
 
-      var handleData = this._view.handles[handleDataIndex];
+      const handleData = this._view.handles[handleDataIndex];
 
-      var nameFrom = handleData.nameFrom;
-      var nameTo = handleData.nameTo;
+      const nameFrom = handleData.nameFrom;
+      const nameTo = handleData.nameTo;
 
       // view
       this._view.setLineWidth(nameFrom, newHandleLeft);
@@ -242,8 +240,8 @@ export default class Controller {
       this._model.items[nameFrom].value -= diff;
       this._model.items[nameTo].value += diff;
 
-      var fromOnChange = this._view.items[nameFrom].onChange;
-      var toOnChange = this._view.items[nameTo].onChange;
+      const fromOnChange = this._view.items[nameFrom].onChange;
+      const toOnChange = this._view.items[nameTo].onChange;
 
       fromOnChange(this._model.items[nameFrom].value);
       toOnChange(this._model.items[nameTo].value);
@@ -253,15 +251,15 @@ export default class Controller {
   }
 
   public removeItem(name: string, onRemove: () => void): void {
-    var removingItemModel = this._model.items[name];
-    var removingItemView = this._view.items[name];
+    const removingItemModel = this._model.items[name];
+    const removingItemView = this._view.items[name];
 
     if (!removingItemModel || !removingItemView) {
       console.warn('Item ' + name + ' not found');
       return;
     }
 
-    var isSingleItem = Object.keys(this._model.items).length === 1;
+    const isSingleItem = Object.keys(this._model.items).length === 1;
 
     if (isSingleItem) {
       this._model.items = {};
@@ -275,7 +273,7 @@ export default class Controller {
       return;
     }
 
-    var isLastItem = this._view.getLastItemName() === name;
+    const isLastItem = this._view.getLastItemName() === name;
 
     if (isLastItem) {
       const handleData = this._view.findHandleDataByToLineName(name);
@@ -312,7 +310,7 @@ export default class Controller {
     const handleData = this._view.findHandleDataByFromLineName(name);
     const nextItemName = handleData && handleData.nameTo;
     const removingItemValue = removingItemModel.value;
-    var line = removingItemView.line;
+    const line = removingItemView.line;
 
     if (!nextItemName) {
       throw new Error('Unexpected behavior during remove item');
@@ -321,10 +319,12 @@ export default class Controller {
     this._model.items[nextItemName].value += removingItemValue;
     this._view.items[nextItemName]._previous = removingItemView._previous;
 
-    var isFirstItem = removingItemView._previous === null;
+    const isFirstItem = removingItemView._previous === null;
 
     if (!isFirstItem) {
-      removingItemView._previous._next = removingItemView._next;
+      if (removingItemView._previous) {
+        removingItemView._previous._next = removingItemView._next;
+      }
     }
 
     // This doesn't work correctly
@@ -333,8 +333,8 @@ export default class Controller {
         return;
       }
 
-      var leftHandleData = this._view.findHandleDataByToLineName(name);
-      var rightHandleData = this._view.findHandleDataByFromLineName(name);
+      const leftHandleData = this._view.findHandleDataByToLineName(name);
+      const rightHandleData = this._view.findHandleDataByFromLineName(name);
 
       if (leftHandleData && rightHandleData) {
         leftHandleData.nameTo = rightHandleData.nameTo;

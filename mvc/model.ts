@@ -6,8 +6,8 @@ export interface IItemModel {
 export interface IItemData {
   name: string;
   value?: number;
-  onChange?: (value: number) => void;
   color?: string;
+  onChange?: (value: number) => void;
 }
 
 export default class Model {

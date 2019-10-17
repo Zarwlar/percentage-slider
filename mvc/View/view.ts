@@ -1,10 +1,24 @@
 import { IMakeHandleMovable } from './makeMoveable';
+import { TOnChange } from '../..';
 
 interface IHandle {
   handle: HTMLElement;
   nameFrom: string;
   nameTo: string;
 }
+
+export interface IItemView {
+  name: string;
+  line: HTMLElement;
+  onChange: TOnChange;
+  _next: null | IItemView;
+  _previous: null | IItemView;
+}
+
+export type TItems = {
+  [name: string]: IItemView;
+}
+
 
 export default class View {
   public static ids: number = 0;
@@ -34,7 +48,7 @@ export default class View {
   public makeHandleMoveableCls: IMakeHandleMovable;
   public node: HTMLElement;
   public slider: HTMLElement;
-  public items: any;
+  public items: TItems;
   public handles: IHandle[];
 
   public constructor(node: HTMLElement, makeHandleMoveable: IMakeHandleMovable) {

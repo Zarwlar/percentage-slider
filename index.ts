@@ -8,6 +8,8 @@ interface IAddItemsOptions {
   force?: boolean;
 }
 
+export type TOnChange = (ids: number, params?: { auto: boolean }) => void;
+
 export default class PercentageSlider {
   private _model: Model;
   private _view: View;
