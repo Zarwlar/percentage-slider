@@ -130,4 +130,10 @@ export default class View {
   public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
     this.makeHandleMoveableCls.makeHandleMoveable(handle, updateValues);
   }
+
+  public calculateZIndexForExtraLeftCase(handle: HTMLElement): void {
+    const index = this.handles.findIndex((handleData) => handleData.handle === handle);
+
+    handle.style.zIndex = String(index);
+  }
 }

@@ -16,6 +16,7 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
     }
 
     handle.ontouchstart = (event) => {
+
       if (event.cancelable) {
         event.preventDefault();
       }
@@ -105,6 +106,11 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
         const oldLeftInPercent = Math.round(this.view.convertToPercent(curLeft));
 
         handle.style.left = `${newLeftInPercent}%`;
+        handle.style.zIndex = '1';
+
+        if (newLeftInPercent === 0) {
+          this.view.calculateZIndexForExtraLeftCase(handle);
+        }
 
         updateValues(oldLeftInPercent, newLeftInPercent);
 
@@ -136,6 +142,7 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
     }
 
     handle.onmousedown = (event) => {
+
       event.preventDefault();
 
       const getSumOfParentsMarginLeft = () => {
@@ -223,6 +230,11 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
         const oldLeftInPercent = Math.round(this.view.convertToPercent(curLeft));
 
         handle.style.left = `${newLeftInPercent}%`;
+        handle.style.zIndex = '1';
+
+        if (newLeftInPercent === 0) {
+          this.view.calculateZIndexForExtraLeftCase(handle);
+        }
 
         updateValues(oldLeftInPercent, newLeftInPercent);
 

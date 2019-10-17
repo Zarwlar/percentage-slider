@@ -85,7 +85,11 @@ export default class Controller {
     this._view.items[namePrev]._next = this._view.items[name];
 
     const handle = this._view.createHandle();
-    this._view.handles.push({ handle: handle, nameFrom: namePrev, nameTo: name });
+    this._view.handles.push({
+      handle: handle,
+      nameFrom: namePrev,
+      nameTo: name,
+    });
 
     return { name, line, handle };
   }
