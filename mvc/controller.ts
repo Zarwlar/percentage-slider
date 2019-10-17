@@ -92,7 +92,7 @@ export default class Controller {
 
   public createItems = function (items: IItemData[]): IItem | IItem[] {
     if (items.length === 1) {
-      return this.createSingleItem(items[0]);
+      return this.createSingleItem(items[0].name, items[0].value, items[0].onChange, items[0].color);
     }
 
     const firstItemData = items[0];
