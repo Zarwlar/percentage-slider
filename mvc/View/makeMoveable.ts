@@ -20,6 +20,20 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
         event.preventDefault();
       }
 
+      const getSumOfParentsMarginLeft = () => {
+        let el = this.view.slider.parentElement;
+        let sum = 0;
+        while (el) {
+          const marginLeft = getComputedStyle(el).marginLeft;
+          const marginLeftInt = parseInt(marginLeft || '0', 10);
+          sum += marginLeftInt;
+          el = el.parentElement;
+        }
+        return sum;
+      }
+
+      const sumMarginLeftInt = getSumOfParentsMarginLeft();
+
       const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
       const longestLineWidth = parseFloat(sliderWidthStr || '');
       const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
@@ -67,10 +81,10 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
 
           if (!isLastLine && nextHandleData) {
             const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0');
+            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0') + sumMarginLeftInt;
 
             if (newLeft > nextHandleLeft) {
-              newLeft = nextHandleLeft;
+              newLeft = nextHandleLeft - sumMarginLeftInt;
               return;
             }
           }
@@ -123,8 +137,21 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
 
     handle.onmousedown = (event) => {
       event.preventDefault();
-      const marginLeft = getComputedStyle(this.view.slider.parentElement!).marginLeft;
-      const marginLeftInt = parseInt(marginLeft || '0', 10);
+
+      const getSumOfParentsMarginLeft = () => {
+        let el = this.view.slider.parentElement;
+        let sum = 0;
+        while (el) {
+          const marginLeft = getComputedStyle(el).marginLeft;
+          const marginLeftInt = parseInt(marginLeft || '0', 10);
+          sum += marginLeftInt;
+          el = el.parentElement;
+        }
+        return sum;
+      }
+
+      const sumMarginLeftInt = getSumOfParentsMarginLeft();
+
       const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
       const longestLineWidth = parseFloat(sliderWidthStr || '');
       const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
@@ -172,10 +199,10 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
 
           if (!isLastLine && nextHandleData) {
             const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0') + marginLeftInt;
+            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0') + sumMarginLeftInt;
 
             if (newLeft > nextHandleLeft) {
-              newLeft = (nextHandleLeft - marginLeftInt);
+              newLeft = (nextHandleLeft - sumMarginLeftInt);
               return;
             }
           }
