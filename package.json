@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node_modules/.bin/parcel ./index.html --public-url ./",
+    "start": "node_modules/.bin/parcel ./index.html",
     "build-prod": "node_modules/.bin/parcel build -d ./build --no-source-maps ./index.html --public-url ./",
     "build-package": "node_modules/.bin/parcel build -d ./package --no-content-hash --no-source-maps --out-file percentage-slider ./index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/Zarwlar/percentage-slider#readme",
   "dependencies": {
-    "mdn-polyfills": "^5.18.0",
     "parcel": "^1.12.4",
     "tslib": "^1.10.0",
     "typescript": "^3.6.4"

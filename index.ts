@@ -1,6 +1,7 @@
+import './polyfills';
 import Model, { IItemData } from './mvc/model';
-import View from './mvc/View/view';
 import Controller from './mvc/controller';
+import View from './mvc/View/view';
 import MakeMoveable, { IMakeHandleMovable } from './mvc/View/makeMoveable';
 import './percentage-slider.css';
 
