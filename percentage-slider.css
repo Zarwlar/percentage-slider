@@ -1,14 +1,4 @@
-* {
-  box-sizing: border-box;
-}
-
-#slider-root {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-#slider, .slider {
+.slider {
   position: relative;
   border-radius: 5px;
   background: #E0E0E0;
@@ -22,57 +12,10 @@
   border-bottom-right-radius: 5px;
 }
 
-#items-list {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
-
-.data-container {
-  text-align: center;
-}
-
-.item-view {
-  margin-right: 5px;
-  padding: 20px;
-  width: 150px;
-  border: 1px solid darkgray;
-  display: flex;
-  flex-direction: column;
-}
-
-.btn, .btn_remove {
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 5px 5px;
-  text-align: center;
-  border-radius: 5px;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 12px;
-}
-
-.btn_remove {
-  background-color: rgb(198, 32, 59);
-}
-
-.remove-item-container {
-  margin: 10px auto 0 auto;
-}
-
-.item-name {
-  margin-right: 10px;
-  font-weight: bold;
-}
-
-.item-value {
-  font-weight: bold;
-}
-
 .handle {
   width: 8px;
   border: 1px dotted white;
+  box-shadow: 0 0 3px white;
   height: 25px;
   border-radius: 5px;
   position: absolute;
@@ -86,21 +29,4 @@
   border-top-left-radius: 5px;
   border-bottom-left-radius: 5px;
   height: 15px;
-}
-
-#add-more, #remove {
-  margin-top: 20px;
-}
-
-#remove-buttons {
-  margin-top: 20px;
-}
-
-.remove {
-  display: block;
-  margin: 10px 0;
-}
-
-.client-slider {
-  max-width: 300px;
 }
