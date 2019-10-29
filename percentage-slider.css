@@ -12,6 +12,13 @@
   border-bottom-right-radius: 5px;
 }
 
+.line {
+  position: absolute;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  height: 15px;
+}
+
 .handle {
   width: 8px;
   border: 1px dotted white;
@@ -22,11 +29,4 @@
   top: -5px;
   background: darkgray;
   cursor: pointer;
-}
-
-.line {
-  position: absolute;
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
-  height: 15px;
 }
