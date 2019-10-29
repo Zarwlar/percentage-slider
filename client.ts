@@ -1,6 +1,4 @@
 import PercentageSlider from './index';
-import 'mdn-polyfills/Array.prototype.findIndex';
-import 'mdn-polyfills/Node.prototype.remove';
 
 const node = document.getElementById('slider-root')!;
 const addItemBtn = document.getElementById('add-item-btn')!;
@@ -34,24 +32,16 @@ addItemBtn.addEventListener('click', function () {
 });
 
 addSetOfItemsBtn.addEventListener('click', function () {
+  addSetOfItemsBtn.remove();
 
   const itemsData = [
-    { name: 'Apples', value: 15, onChange: undefined },
-    { name: 'Bananas', value: 60, onChange: undefined },
-    { name: 'Oranges', value: 15, onChange: undefined },
-    { name: 'Avocados', value: 1, onChange: undefined },
+    { name: 'Apples', value: 15, onChange: undefined, color: 'rgb(61, 91, 100)' },
+    { name: 'Bananas', value: 60, onChange: undefined, color: 'rgb(186, 29, 127)' },
+    { name: 'Oranges', value: 15, onChange: undefined, color: 'rgb(57, 126, 143)' },
+    { name: 'Avocados', value: 1, onChange: undefined, color: 'rgb(152, 170, 177)' },
   ];
 
-  const colors = itemsData.map(_ => getRandomColor());
-
-  const withColorsItemsData = itemsData.map((item, index) => {
-    return {
-      ...item,
-      color: colors[index],
-    };
-  })
-
-  const valueFragments = withColorsItemsData.map(item => {
+  const valueFragments = itemsData.map(item => {
     return createSegmentValueView(item.name, item.value, item.color);
   }).map(fragment => {
     return fragment.querySelector('.item-value')!;
@@ -63,7 +53,7 @@ addSetOfItemsBtn.addEventListener('click', function () {
     }
   });
 
-  const withOnChangeItemsData = withColorsItemsData.map((item, index) => {
+  const withOnChangeItemsData = itemsData.map((item, index) => {
     return {
       ...item,
       onChange: onChanges[index],
@@ -73,12 +63,14 @@ addSetOfItemsBtn.addEventListener('click', function () {
   slider.addItems(withOnChangeItemsData, {
     force: true,
   });
+
 });
 
 function createSegmentValueView(name: string, value: number, color: string) {
   const fragment = document.createElement('div');
   fragment.classList.add(name);
   fragment.classList.add('item-view');
+  fragment.style.backgroundColor = color;
 
   const dataContainer = document.createElement('div');
   dataContainer.classList.add('data-container');
@@ -101,7 +93,6 @@ function createSegmentValueView(name: string, value: number, color: string) {
   const nameFragment = document.createElement('span');
   nameFragment.classList.add('item-name');
   nameFragment.textContent = name;
-  nameFragment.style.color = color;
 
   const valueFragment = document.createElement('span');
   valueFragment.classList.add('item-value');

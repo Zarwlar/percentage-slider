@@ -7,25 +7,33 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
   <link rel="stylesheet" type="text/css" href="./percentage-slider.css">
+  <link rel="stylesheet" type="text/css" href="./client.css">
 </head>
 
 <body>
   <div id="slider-root"></div>
 
-  <h2>Add manually</h2>
-  <button class="btn" id="add-item-btn">Add item</button>
+  <div class="add-handle-containers">
+    <div class="add-handle-containers__row">
+      <h2>Add handle manually</h2>
 
-  <label for="item-name-input">Name (required)</label>
-  <input id="item-name-input" type="text">
+      <label for="item-name-input">Name (required)</label>
+      <input id="item-name-input" type="text">
 
-  <label for="item-value-input">Value</label>
-  <input id="item-value-input" type="text">
+      <label for="item-value-input">Value</label>
+      <input id="item-value-input" type="text">
 
-  <h2>Add automatically</h2>
-  <div>
-    <button class="btn" id="add-set-of-items">Add set of items</button>
+      <button class="btn" id="add-item-btn">Add Item</button>
+    </div>
+
+    <div class="add-handle-containers__row">
+      <h2>Add handles automatically</h2>
+      <div>
+        <button class="btn" id="add-set-of-items">Add Items</button>
+      </div>
+    </div>
+
   </div>
-
   <div id="items-list"></div>
 
   <script src="./client.ts"></script>
