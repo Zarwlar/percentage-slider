@@ -327,7 +327,6 @@ export default class Controller {
       }
     }
 
-    // This doesn't work correctly
     const updateHandles = () => {
       if (isLastItem) {
         return;
