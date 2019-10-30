@@ -1,7 +1,7 @@
 {
   "name": "percentage-slider",
   "version": "1.0.0",
-  "description": "",
+  "description": "JavaScript segments percentages slider",
   "main": "index.js",
   "scripts": {
     "start": "node_modules/.bin/parcel ./index.html",
@@ -16,13 +16,13 @@
   "keywords": [
     "slider"
   ],
-  "author": "Alexey",
-  "license": "ISC",
+  "author": "Alexey Zhmaylik",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Zarwlar/percentage-slider/issues"
   },
   "homepage": "https://github.com/Zarwlar/percentage-slider#readme",
-  "dependencies": {
+  "devDependencies": {
     "parcel": "^1.12.4",
     "tslib": "^1.10.0",
     "typescript": "^3.6.4"
