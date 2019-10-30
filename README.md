@@ -13,7 +13,8 @@ Usage
 -------------
 
 ```javascript
-import PercentageSlider from 'percentage-slider'
+import PercentageSlider from 'percentage-slider';
+import 'percentage-slider.css';
 
 const rootElem = document.getElementById('.root');
 const slider = new PercentageSlider(rootElem);

@@ -1,8 +1,8 @@
 {
   "name": "percentage-slider",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "JavaScript segments percentages slider",
-  "main": "index.js",
+  "main": "package/index.js",
   "scripts": {
     "start": "node_modules/.bin/parcel ./index.html",
     "build-prod": "node_modules/.bin/parcel build -d ./build --no-source-maps ./index.html --public-url ./",
