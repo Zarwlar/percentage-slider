@@ -1,6 +1,10 @@
 It's JavaScript percentage slider with the possible of adding and removing handles. (Works in IE11+)<br>
 [Demo](https://zarwlar.github.io/percentage-slider/)
 
+Preview
+-------------
+![](/preview.webm)
+
 Install
 -------------
 
