@@ -14,7 +14,7 @@ Usage
 
 ```javascript
 import PercentageSlider from 'percentage-slider';
-import 'percentage-slider.css';
+import 'percentage-slider/package/percentage-slider.css';
 
 const rootElem = document.getElementById('.root');
 const slider = new PercentageSlider(rootElem);
