@@ -1,6 +1,6 @@
 {
   "name": "percentage-slider",
-  "version": "1.0.13",
+  "version": "1.0.15",
   "description": "JavaScript segments percentages slier",
   "main": "package/index.js",
   "scripts": {

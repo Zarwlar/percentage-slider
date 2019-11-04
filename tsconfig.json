@@ -18,7 +18,6 @@
     "allowJs": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
-    "importHelpers": true,
     "noStrictGenericChecks": true
   },
   "exclude": [
