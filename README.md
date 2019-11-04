@@ -3,7 +3,7 @@ It's JavaScript percentage slider with the possible of adding and removing handl
 
 Preview
 -------------
-![](/preview.webm)
+![](./preview.webp)
 
 Install
 -------------
