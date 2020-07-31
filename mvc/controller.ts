@@ -216,7 +216,7 @@ export default class Controller {
     const handle = item.handle;
     const prevItem = this._view.items[item.name]._previous;
 
-    handle.style.left = prevItem && Math.round(this._view.getPercentOf(prevItem.name)) + '%';
+    handle.style.left = prevItem && Math.round(this._view.getPercentOf(prevItem.name)) + '%' || '1%';
 
     const updateValues = (oldHandleLeft: number, newHandleLeft: number) => {
       const handleDataIndex = this._view.handles.findIndex(function (handleData) {

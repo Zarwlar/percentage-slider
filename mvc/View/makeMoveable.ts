@@ -12,7 +12,8 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
   public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
 
     if (!this.view) {
-      throw new Error('View field is not initialized');
+      console.warn('View field is not initialized');
+      return;
     }
 
     handle.ontouchstart = (event) => {
@@ -124,7 +125,8 @@ export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
   public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
 
     if (!this.view) {
-      throw new Error('View field is not initialized');
+      console.warn('View field is not initialized');
+      return;
     }
 
     handle.onmousedown = (event) => {

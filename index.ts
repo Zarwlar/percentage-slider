@@ -20,7 +20,8 @@ export default class PercentageSlider {
 
   public constructor(node: HTMLElement | null) {
     if (!node) {
-      throw new Error('Node is empty!');
+      console.warn('Node is empty!');
+      return;
     }
 
     this._model = new Model();
@@ -51,13 +52,15 @@ export default class PercentageSlider {
     const { value, onChange, name, color } = itemData;
 
     if (!this._model.isValidValue(value)) {
-      throw new Error("Total can't be greater than " + this._model.total);
+      console.warn("Total can't be greater than " + this._model.total);
+      return;
     }
 
     const hasNameAlreadyTaken = this._model.items[name];
 
     if (hasNameAlreadyTaken) {
-      throw new Error(`Name '${name}' has already taken`);
+      console.warn(`Name '${name}' has already taken`);
+      return;
     }
 
     if (this._model.hasNoItems()) {
@@ -100,17 +103,20 @@ export default class PercentageSlider {
     const someItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
 
     if (someItemsAlreadyAdded) {
-      throw new Error("Items can not be added to already initialized slider");
+      console.warn("Items can not be added to already initialized slider");
+      return;
     }
 
     const itemsDataSum = itemsData.reduce((acc, curr) => acc + (curr.value || 0), 0);
 
     if (itemsDataSum > this._model.total) {
-      throw new Error(`Sum of items can not be great than ${this._model.total}`);
+      console.warn(`Sum of items can not be great than ${this._model.total}`);
+      return;
     }
 
     if (itemsData.length === 0) {
-      throw new Error("Items length can not be equal 0");
+      console.warn("Items length can not be equal 0");
+      return;
     }
 
     let convertedItems = itemsData.map((itemData: IItemData) => {
