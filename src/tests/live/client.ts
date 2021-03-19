@@ -1,4 +1,5 @@
-import PercentageSlider from './index';
+import PercentageSlider from '../../index';
+import './client.css';
 
 const node = document.getElementById('slider-root')!;
 const addItemBtn = document.getElementById('add-item-btn')!;

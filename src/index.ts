@@ -1,9 +1,10 @@
-import './polyfills';
-import Model, { IItemData } from './mvc/model';
-import Controller from './mvc/controller';
-import View from './mvc/View/view';
-import MakeMoveable, { IMakeHandleMovable } from './mvc/View/makeMoveable';
-import './percentage-slider.css';
+import './polyfills/Array';
+import './polyfills/DOM';
+
+import Model, { IItemData } from './model';
+import Controller from './controller';
+import View from './View/view';
+import MakeMoveable, { IMakeHandleMovable } from './View/makeMoveable';
 
 interface IAddItemsOptions {
   force?: boolean;
