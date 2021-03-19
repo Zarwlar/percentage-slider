@@ -17,18 +17,17 @@ addItemBtn.addEventListener('click', function () {
 
   const fragment = createSegmentValueView(name, value, color);
   const valueFragment = fragment.querySelector('.item-value')!;
-
-  const itemData = {
-    name,
-    value,
-    onChange: updateValue,
-    color,
+  const onChange = (value: number) => {
+    valueFragment.textContent = value + '%';
   };
 
-  slider.addItem(itemData);
+  const itemData = { name, value, color, onChange };
+  const result = slider.addItem(itemData);
 
-  function updateValue(value: number) {
-    valueFragment.textContent = value + '%';
+  if (!result.success) {
+    return console.error(result.error);
+  } else {
+    itemsList.appendChild(fragment);
   }
 });
 
@@ -104,8 +103,6 @@ function createSegmentValueView(name: string, value: number, color: string) {
 
   fragment.appendChild(dataContainer);
   fragment.appendChild(removeItemContainer);
-
-  itemsList.appendChild(fragment);
 
   return fragment;
 }
