@@ -1,5 +1,6 @@
 import { IMakeHandleMovable } from './makeMoveable';
-import { TOnChange } from '../..';
+import { TOnChange } from '../';
+import './styles.scss';
 
 interface IHandle {
   handle: HTMLElement;

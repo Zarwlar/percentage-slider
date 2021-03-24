@@ -1,15 +1,28 @@
-import './polyfills';
-import Model, { IItemData } from './mvc/model';
-import Controller from './mvc/controller';
-import View from './mvc/View/view';
-import MakeMoveable, { IMakeHandleMovable } from './mvc/View/makeMoveable';
-import './percentage-slider.css';
+import './polyfills/Array';
+import './polyfills/DOM';
+
+import Model, { IItemData } from './model';
+import Controller from './controller';
+import View from './View/view';
+import MakeMoveable, { IMakeHandleMovable } from './View/makeMoveable';
 
 interface IAddItemsOptions {
   force?: boolean;
 }
 
 export type TOnChange = (ids: number, params?: { auto: boolean }) => void;
+
+export type SuccessResult<T> =
+  { success: true,
+    payload?: T
+  }
+
+export type ErrorResult =
+  { success: false;
+    error: string;
+  }
+
+export type Result<T> = SuccessResult<T> | ErrorResult;
 
 export default class PercentageSlider {
   private _model: Model;
@@ -48,19 +61,17 @@ export default class PercentageSlider {
     }).bind(this);
   }
 
-  public addItem(itemData: IItemData): void {
+  public addItem(itemData: IItemData): Result<void> {
     const { value, onChange, name, color } = itemData;
 
     if (!this._model.isValidValue(value)) {
-      console.warn("Total can't be greater than " + this._model.total);
-      return;
+      return { success: false, error: 'Total can\'t be greater than ' + this._model.total};
     }
 
     const hasNameAlreadyTaken = this._model.items[name];
 
     if (hasNameAlreadyTaken) {
-      console.warn(`Name '${name}' has already taken`);
-      return;
+      return { success: false, error: `Name '${name}' has already taken`};
     }
 
     if (this._model.hasNoItems()) {
@@ -71,7 +82,7 @@ export default class PercentageSlider {
       if (value && !isNaN(value)) {
         this._wasChanged = true;
       }
-      return;
+      return { success: true };
     }
 
     const item = this._controller.createItem(name, (value || 0), this.mkOnChange(onChange), color || View.getRandomColor());
@@ -79,7 +90,7 @@ export default class PercentageSlider {
     if (value && !isNaN(value)) {
       this._wasChanged = true;
       this._controller.addItemToSlider(value, item);
-      return;
+      return { success: true };
     }
 
     if (this._wasChanged) {
@@ -89,34 +100,37 @@ export default class PercentageSlider {
       } else {
         this._controller.addItemToSliderGreedy(item);
       }
-      return;
+
+      return { success: true };
     }
 
     this._controller.addItemToSliderAuto(item);
-    return;
+
+    return { success: true };
   }
 
-  public addItems(itemsData: IItemData[], options?: IAddItemsOptions): void {
+  public addItems(itemsData: IItemData[], options?: IAddItemsOptions): Result<void> {
 
     const force = options && options.force;
 
     const someItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
 
     if (someItemsAlreadyAdded) {
-      console.warn("Items can not be added to already initialized slider");
-      return;
+      return { success: false,
+               error: 'Items can not be added to already initialized slider'
+             };
     }
 
     const itemsDataSum = itemsData.reduce((acc, curr) => acc + (curr.value || 0), 0);
 
     if (itemsDataSum > this._model.total) {
-      console.warn(`Sum of items can not be great than ${this._model.total}`);
-      return;
+      return { success: false,
+               error: `Sum of items can not be great than ${this._model.total}`
+             };
     }
 
     if (itemsData.length === 0) {
-      console.warn("Items length can not be equal 0");
-      return;
+      return { success: false, error: 'Items length can not be equal 0' };
     }
 
     let convertedItems = itemsData.map((itemData: IItemData) => {
@@ -133,6 +147,8 @@ export default class PercentageSlider {
     var items = this._controller.createItems(convertedItems);
 
     this._controller.addItemsToSlider(items);
+
+    return { success: true };
   }
 
   public removeItem(name: string, onRemove?: () => void): void {

@@ -5,11 +5,11 @@
   background: linear-gradient(left top, #E0E0E0, #EEEEEE);
   width: 100%;
   height: 15px;
-}
 
-.slider > *:first-child {
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: 5px;
+  & > *:first-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
 }
 
 .line {
