@@ -5,9 +5,47 @@ export interface IMakeHandleMovable {
   view: View;
 }
 
-export class MakeHandleMoveableMobile implements IMakeHandleMovable {
+type Platform = 'mobile' | 'desktop'
+
+interface PlatformDependetData<E extends Platform> {
+  eventName: E extends 'mobile' ? 'ontouchstart' : 'onmousedown'
+  getClientX: (event: E extends 'mobile' ? TouchEvent : MouseEvent) => number
+  move:
+    { start: E extends 'mobile' ? 'touchmove' : 'mousemove'
+    , finish: E extends 'mobile' ? 'touchend' : 'mouseup'
+    }
+}
+
+interface Env {
+  mobile: PlatformDependetData<'mobile'>
+  desktop: PlatformDependetData<'desktop'>
+}
+
+const environment: Env = {
+  mobile:
+    { eventName: 'ontouchstart'
+    , getClientX: (event) => event.touches[0].clientX
+    , move: { start: 'touchmove', finish: 'touchend' }
+    },
+  desktop:
+    { eventName: 'onmousedown'
+    , getClientX: (event) => event.clientX
+    , move: { start: 'mousemove', finish: 'mouseup' }
+    }
+};
+
+
+export class MakeHandleMoveable implements IMakeHandleMovable {
+
+  constructor() {
+    const platform: Platform = typeof window.orientation !== 'undefined' ? 'mobile' : 'desktop';
+    this.enviroment = environment[platform];
+  }
+
+  private enviroment: Env[keyof Env];
 
   public view: View;
+
 
   public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
 
@@ -16,7 +54,7 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
       return;
     }
 
-    handle.ontouchstart = (event) => {
+    handle[this.enviroment.eventName] = (event) => {
 
       if (event.cancelable) {
         event.preventDefault();
@@ -27,14 +65,15 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
       const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
 
       const isPartialFilledSlider = longestLinePercent !== 100;
-      const shiftX = event.touches[0].clientX - handle.getBoundingClientRect().left;
+      const shiftX = this.enviroment.getClientX(event as TouchEvent & MouseEvent) - handle.getBoundingClientRect().left;
 
-      const onTouchMove = (event: TouchEvent) => {
-        let newLeft = event.touches[0].clientX - shiftX - this.view.slider.getBoundingClientRect().left;
+
+      const onMove = (event: TouchEvent) => {
+        let newLeft = this.enviroment.getClientX(event as TouchEvent & MouseEvent) - shiftX - this.view.slider.getBoundingClientRect().left;
 
         const considerLeftEdgeCase = () => {
-          const nameFrom = this.view.getHandleData(handle).nameFrom;
-          const prevHandleData = this.view.findHandleDataByToLineName(nameFrom);
+          const previousName = this.view.getHandleData(handle).previousName;
+          const prevHandleData = this.view.findHandleDataByToLineName(previousName);
           const isFirstHandle = prevHandleData === null;
 
           if (!isFirstHandle) {
@@ -63,8 +102,8 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
             offset = longestLine && (longestLine as HTMLElement).getBoundingClientRect().left || offset;
           }
 
-          const nameTo = this.view.getHandleData(handle).nameTo;
-          const nextHandleData = this.view.findHandleDataByFromLineName(nameTo);
+          const nextName = this.view.getHandleData(handle).nextName;
+          const nextHandleData = this.view.findHandleDataByFromLineName(nextName);
           const isLastLine = nextHandleData === null;
 
           if (!isLastLine && nextHandleData) {
@@ -88,28 +127,23 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
         considerLeftEdgeCase();
         considerRightEdgeCase();
 
-        const curLeft = parseFloat(getComputedStyle(handle).left || '0');
+        const currentLeft = parseFloat(getComputedStyle(handle).left || '0');
         const newLeftInPercent = Math.round(this.view.convertToPercent(newLeft));
-        const oldLeftInPercent = Math.round(this.view.convertToPercent(curLeft));
+        const oldLeftInPercent = Math.round(this.view.convertToPercent(currentLeft));
 
         handle.style.left = `${newLeftInPercent}%`;
-        handle.style.zIndex = '1';
-
-        if (newLeftInPercent === 0) {
-          this.view.calculateZIndexForExtraLeftCase(handle);
-        }
 
         updateValues(oldLeftInPercent, newLeftInPercent);
 
       }
 
-      const onTouchEnd = () => {
-        document.removeEventListener('touchend', onTouchEnd);
-        document.removeEventListener('touchmove', onTouchMove);
+      const onMoveEnd = () => {
+        document.removeEventListener(this.enviroment.move.finish, onMoveEnd);
+        document.removeEventListener(this.enviroment.move.start, onMove);
       }
 
-      document.addEventListener('touchmove', onTouchMove);
-      document.addEventListener('touchend', onTouchEnd);
+      document.addEventListener(this.enviroment.move.start, onMove);
+      document.addEventListener(this.enviroment.move.finish, onMoveEnd);
     };
 
     handle.ondragstart = function () {
@@ -118,126 +152,4 @@ export class MakeHandleMoveableMobile implements IMakeHandleMovable {
   }
 }
 
-export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
-
-  public view: View;
-
-  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
-
-    if (!this.view) {
-      console.warn('View field is not initialized');
-      return;
-    }
-
-    handle.onmousedown = (event) => {
-
-      event.preventDefault();
-
-      const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
-      const longestLineWidth = parseFloat(sliderWidthStr || '');
-      const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
-
-      const isPartialFilledSlider = longestLinePercent !== 100;
-      const shiftX = event.clientX - handle.getBoundingClientRect().left;
-
-      const onMouseMove = (event: MouseEvent) => {
-        let newLeft = event.clientX - shiftX - this.view.slider.getBoundingClientRect().left;
-
-        const considerLeftEdgeCase = () => {
-          const nameFrom = this.view.getHandleData(handle).nameFrom;
-          const prevHandleData = this.view.findHandleDataByToLineName(nameFrom);
-          const isFirstHandle = prevHandleData === null;
-
-          if (!isFirstHandle) {
-            const prevHandle = prevHandleData && prevHandleData.handle;
-            const prevHandleLeft = prevHandle && parseFloat(getComputedStyle(prevHandle).left || '0') || 0;
-
-            if (newLeft < prevHandleLeft) {
-              newLeft = prevHandleLeft;
-              return;
-            }
-          }
-
-          if (newLeft < 0) {
-            newLeft = 0;
-          }
-        }
-
-        const considerRightEdgeCase = () => {
-          let rightEdgeSource = this.view.slider.offsetWidth;
-          let offset = this.view.slider.getBoundingClientRect().left;
-          newLeft += offset;
-
-          if (isPartialFilledSlider) {
-            const longestLine = this.view.slider.firstChild;
-            rightEdgeSource = longestLine && (longestLine as HTMLElement).offsetWidth || rightEdgeSource;
-            offset = longestLine && (longestLine as HTMLElement).getBoundingClientRect().left || offset;
-          }
-
-          const nameTo = this.view.getHandleData(handle).nameTo;
-          const nextHandleData = this.view.findHandleDataByFromLineName(nameTo);
-          const isLastLine = nextHandleData === null;
-
-          if (!isLastLine && nextHandleData) {
-            const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0');
-
-            if (newLeft > nextHandleLeft + offset) {
-              newLeft = nextHandleLeft;
-              return;
-            }
-          }
-
-          newLeft -= offset;
-
-          const rightEdge = rightEdgeSource;
-          if (newLeft > rightEdge) {
-            newLeft = rightEdge;
-          }
-        }
-
-        considerLeftEdgeCase();
-        considerRightEdgeCase();
-
-        const curLeft = parseFloat(getComputedStyle(handle).left || '0');
-        const newLeftInPercent = Math.round(this.view.convertToPercent(newLeft));
-        const oldLeftInPercent = Math.round(this.view.convertToPercent(curLeft));
-
-        handle.style.left = `${newLeftInPercent}%`;
-        handle.style.zIndex = '1';
-
-        if (newLeftInPercent === 0) {
-          this.view.calculateZIndexForExtraLeftCase(handle);
-        }
-
-        updateValues(oldLeftInPercent, newLeftInPercent);
-
-      }
-
-      const onMouseUp = () => {
-        document.removeEventListener('mouseup', onMouseUp);
-        document.removeEventListener('mousemove', onMouseMove);
-      }
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    handle.ondragstart = function () {
-      return false;
-    };
-  }
-}
-
-export type TMakeHandleMoveable =
-  typeof MakeHandleMoveableDesktop |
-  typeof MakeHandleMoveableMobile;
-
-function getMakeHandleMoveableCls(): TMakeHandleMoveable {
-  const isMobileDevice = typeof window.orientation !== 'undefined';
-  return isMobileDevice ? MakeHandleMoveableMobile : MakeHandleMoveableDesktop;
-}
-
-const MakeMoveable = getMakeHandleMoveableCls();
-
-export default MakeMoveable;
+export default MakeHandleMoveable;
