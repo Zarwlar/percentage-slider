@@ -3,8 +3,8 @@ import './polyfills/DOM';
 
 import Model, { IItemData } from './model';
 import Controller from './controller';
-import View from './View/view';
-import MakeMoveable, { IMakeHandleMovable } from './View/makeMoveable';
+import View from './view/view';
+import MakeMoveable, { IMakeHandleMovable } from './view/makeMoveable';
 
 interface IAddItemsOptions {
   force?: boolean;

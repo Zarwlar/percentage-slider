@@ -20,7 +20,7 @@ Usage
 import PercentageSlider from 'percentage-slider';
 import 'percentage-slider/package/percentage-slider.css';
 
-const rootElem = document.getElementById('.root');
+const rootElem = document.getElementById('root');
 const slider = new PercentageSlider(rootElem);
 
 const itemData = {
@@ -48,8 +48,8 @@ API
 {
   name: String // Name of adding item
   value?: Number // Initial value for handle (from 0 to 100)
-  onChange?: (value: Number) => void // Callback which will be called
-  color?: String // Color of line. If isn't provided, then line will be had random color.
+  onChange?: (value: Number) => void // Callback with a new value as an argument
+  color?: String // Color of line. If isn't provided, then line will be had random color. Can take the same values as in the css property background-color
 }
 ```
 

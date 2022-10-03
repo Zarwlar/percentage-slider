@@ -1,5 +1,5 @@
 import Model, { IItemModel, IItemData } from './model';
-import View, { IItemView } from './View/view';
+import View, { IItemView } from './view/view';
 
 interface IItem {
   name: string;

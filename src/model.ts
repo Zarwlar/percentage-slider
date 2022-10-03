@@ -14,6 +14,11 @@ export default class Model {
   public items: Record<string, IItemModel> = {};
   public total: number = 100;
 
+  // Gets the same cube of 100 by the given number of elements. For example
+  // getEqualParts(2) -> [50, 50]
+  // getEqualParts(3) -> [33, 33, 33]
+  // getEqualParts(4) -> [25, 25, 25, 250
+  // and so on..
   public getEqualParts(n: number): number[] {
     const values = [];
     let total = this.total;
