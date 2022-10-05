@@ -2,21 +2,21 @@ import PercentageSlider from '../../index';
 import './client.css';
 
 const node = document.getElementById('slider-root')!;
-const addItemBtn = document.getElementById('add-item-btn')!;
-const addSetOfItemsBtn = document.getElementById('add-set-of-items')!;
-const itemNameInput = document.getElementById('item-name-input')! as HTMLInputElement;
-const itemValueInput = document.getElementById('item-value-input')! as HTMLInputElement;
-const itemsList = document.getElementById('items-list')!;
+const addSliderButton = document.getElementById('add-slider-button')!;
+const addSetOfSlidersButton = document.getElementById('add-set-of-sliders')!;
+const sliderNameInput = document.getElementById('slider-name-input')! as HTMLInputElement;
+const sliderValueInput = document.getElementById('slider-value-input')! as HTMLInputElement;
+const listOfValueView = document.getElementById('list-of-value-value')!;
 
 const slider = new PercentageSlider(node);
 
-addItemBtn.addEventListener('click', function () {
-  const name = itemNameInput.value;
-  const value = parseInt(itemValueInput.value, 10);
+addSliderButton.addEventListener('click', function () {
+  const name = sliderNameInput.value;
+  const value = parseInt(sliderValueInput.value, 10);
   const color = getRandomColor();
 
-  const fragment = createSegmentValueView(name, value, color);
-  const valueFragment = fragment.querySelector('.item-value')!;
+  const valueView = createSegmentValueView({ name, value, color });
+  const valueFragment = valueView.querySelector('.item-value')!;
   const onChange = (value: number) => {
     valueFragment.textContent = value + '%';
   };
@@ -25,25 +25,31 @@ addItemBtn.addEventListener('click', function () {
   const result = slider.addItem(itemData);
 
   if (!result.success) {
-    return console.error(result.error);
+    alert(result.error)
   } else {
-    itemsList.appendChild(fragment);
+    listOfValueView.appendChild(valueView);
+    document.querySelector('.quick-demo')?.remove();
+    sliderNameInput.value = '';
+    sliderValueInput.value = '';
   }
 });
 
-addSetOfItemsBtn.addEventListener('click', function () {
-  addSetOfItemsBtn.remove();
+addSetOfSlidersButton.addEventListener('click', function () {
+  addSetOfSlidersButton.remove();
 
-  const itemsData = [
-    { name: 'Apples', value: 15, onChange: undefined, color: 'rgb(61, 91, 100)' },
-    { name: 'Bananas', value: 60, onChange: undefined, color: 'rgb(186, 29, 127)' },
-    { name: 'Oranges', value: 15, onChange: undefined, color: 'rgb(57, 126, 143)' },
-    { name: 'Avocados', value: 1, onChange: undefined, color: 'rgb(152, 170, 177)' },
+  const demoData = [
+    { name: 'Apples', value: 0, onChange: undefined, color: '#e0aaff' },
+    { name: 'Bananas', value: 0, onChange: undefined, color: '#c77dff' },
+    { name: 'Oranges', value: 0, onChange: undefined, color: '#9d4edd' },
+    { name: 'Avocados', value: 100, onChange: undefined, color: '#7b2cbf' },
   ];
 
-  const valueFragments = itemsData.map(item => {
-    return createSegmentValueView(item.name, item.value, item.color);
-  }).map(fragment => {
+  const demoViewData = demoData.map(createSegmentValueView);
+
+  demoViewData.forEach(fragment => listOfValueView.appendChild(fragment));
+
+
+  const valueFragments = demoViewData.map(fragment => {
     return fragment.querySelector('.item-value')!;
   });
 
@@ -53,22 +59,21 @@ addSetOfItemsBtn.addEventListener('click', function () {
     }
   });
 
-  const withOnChangeItemsData = itemsData.map((item, index) => {
+  const withOnChangedemoData = demoData.map((item, index) => {
     return {
       ...item,
       onChange: onChanges[index],
     };
   });
 
-  slider.addItems(withOnChangeItemsData, {
-    force: true,
-  });
+  slider.addItems(withOnChangedemoData);
 
+  document.querySelector('.manually-demo')?.remove();
 });
 
-function createSegmentValueView(name: string, value: number, color: string) {
+function createSegmentValueView(params: { name: string, value: number, color: string }) {
+  const { name, value, color } = params;
   const fragment = document.createElement('div');
-  fragment.classList.add(name);
   fragment.classList.add('item-view');
   fragment.style.backgroundColor = color;
 
@@ -80,6 +85,7 @@ function createSegmentValueView(name: string, value: number, color: string) {
 
   const removeButton = document.createElement('button');
   removeButton.textContent = `Remove item`;
+  removeButton.classList.add('btn');
   removeButton.classList.add('btn_remove');
 
   removeButton.addEventListener('click', function () {
