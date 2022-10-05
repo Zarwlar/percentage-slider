@@ -2,15 +2,10 @@ import './polyfills/Array';
 import './polyfills/DOM';
 
 import Model, { IItemData } from './model';
-import Controller from './controller';
+import Controller, { CreatedItemParams } from './controller';
 import View from './view/view';
-import MakeMoveable, { IMakeHandleMovable } from './view/makeMoveable';
 
-interface IAddItemsOptions {
-  force?: boolean;
-}
-
-export type TOnChange = (ids: number, params?: { auto: boolean }) => void;
+export type OnChange = (ids: number, params?: { auto: boolean }) => void;
 
 export type SuccessResult<T> =
   { success: true,
@@ -25,12 +20,6 @@ export type ErrorResult =
 export type Result<T> = SuccessResult<T> | ErrorResult;
 
 export default class PercentageSlider {
-  private _model: Model;
-  private _view: View;
-  private _controller: Controller;
-  private _makeMoveable: IMakeHandleMovable;
-  private _wasChanged = false;
-
   public constructor(node: HTMLElement | null) {
     if (!node) {
       console.warn('Node is empty!');
@@ -38,27 +27,8 @@ export default class PercentageSlider {
     }
 
     this._model = new Model();
-    this._makeMoveable = new MakeMoveable();
-    this._view = new View(node, this._makeMoveable);
-    this._makeMoveable.view = this._view;
+    this._view = new View(node);
     this._controller = new Controller(this._model, this._view);
-  }
-
-  public mkOnChange(onChange?: (value: number) => void): () => void {
-    return ((value: number, options: { auto: boolean }) => {
-      var auto = options && options.auto;
-      var isNumber = typeof value === 'number' && !isNaN(value);
-
-      this._wasChanged = auto ? this._wasChanged : true;
-
-      onChange && isNumber && onChange(value);
-    }).bind(this);
-  }
-
-  public mkOnRemove(onRemove?: () => void): () => void {
-    return (function () {
-      onRemove && onRemove();
-    }).bind(this);
   }
 
   public addItem(itemData: IItemData): Result<void> {
@@ -71,21 +41,40 @@ export default class PercentageSlider {
     const hasNameAlreadyTaken = this._model.items[name];
 
     if (hasNameAlreadyTaken) {
-      return { success: false, error: `Name '${name}' has already taken`};
+      return { success: false, error: `The name '${name}' is already in use`};
     }
 
     if (this._model.hasNoItems()) {
-      const validValue = parseInt(`${value}`, 10) || this._model.total;
-      const item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange), color || View.getRandomColor());
-      this._view.appendItem(item.line);
+      try {
+        const validValue = parseInt(`${value}`, 10) || this._model.total;
+        const itemData = {
+          name: name,
+          value: validValue,
+          onChange: this.mkOnChange(onChange),
+          color: color || View.getRandomColor()
+        }
 
-      if (value && !isNaN(value)) {
-        this._wasChanged = true;
+        const item = this._controller.createSingleItem(itemData);
+
+        this._view.appendItem(item.line);
+
+        if (value && !isNaN(value)) {
+          this._wasChanged = true;
+        }
+        return { success: true };
+      } catch (e) {
+        return { success: false, error: e }
       }
-      return { success: true };
     }
 
-    const item = this._controller.createItem(name, (value || 0), this.mkOnChange(onChange), color || View.getRandomColor());
+    const itemParams = {
+      name,
+      value: (value || 0),
+      onChange: this.mkOnChange(onChange),
+      color: color || View.getRandomColor(),
+    };
+
+    const item = this._controller.createItem(itemParams);
 
     if (value && !isNaN(value)) {
       this._wasChanged = true;
@@ -109,9 +98,7 @@ export default class PercentageSlider {
     return { success: true };
   }
 
-  public addItems(itemsData: IItemData[], options?: IAddItemsOptions): Result<void> {
-
-    const force = options && options.force;
+  public addItems(itemsData: IItemData[]): Result<void> {
 
     const someItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
 
@@ -133,16 +120,14 @@ export default class PercentageSlider {
       return { success: false, error: 'Items length can not be equal 0' };
     }
 
-    let convertedItems = itemsData.map((itemData: IItemData) => {
+    let convertedItems: Array<CreatedItemParams> = itemsData.map((itemData: IItemData) => {
       return {
         ...itemData,
+        color: itemData.color || View.getRandomColor(),
+        value: (itemData.value || 0),
         onChange: this.mkOnChange(itemData.onChange),
       };
     });
-
-    if (force && itemsDataSum !== this._model.total) {
-      this._model.makeSumEqualTotal(convertedItems, itemsDataSum);
-    }
 
     var items = this._controller.createItems(convertedItems);
 
@@ -153,6 +138,28 @@ export default class PercentageSlider {
 
   public removeItem(name: string, onRemove?: () => void): void {
     this._controller.removeItem(name, this.mkOnRemove(onRemove));
+  }
+
+  private _model: Model;
+  private _view: View;
+  private _controller: Controller;
+  private _wasChanged = false;
+
+  private mkOnChange(onChange?: (value: number) => void): () => void {
+    return ((value: number, options: { auto: boolean }) => {
+      var auto = options && options.auto;
+      var isNumber = typeof value === 'number' && !isNaN(value); // TODO: How it's possible?
+
+      this._wasChanged = auto ? this._wasChanged : true;
+
+      onChange && isNumber && onChange(value);
+    }).bind(this);
+  }
+
+  private mkOnRemove(onRemove?: () => void): () => void {
+    return (function () {
+      onRemove && onRemove();
+    }).bind(this);
   }
 }
 

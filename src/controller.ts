@@ -13,7 +13,11 @@ interface ISingleItem {
   value: number;
 }
 
-type TOnChange = (ids: number, params: { auto: boolean }) => void;
+type InternalOnChange = (ids: number, params: { auto: boolean }) => void;
+
+type CreateItemsOutput = [ISingleItem, ...Array<IItem>]
+
+export type CreatedItemParams = Required<IItemData> & { onChange: InternalOnChange }
 
 export default class Controller {
   private _model: Model;
@@ -24,7 +28,8 @@ export default class Controller {
     this._view = view;
   }
 
-  public createSingleItem(name: string, value: number, onChange: TOnChange, color: string): ISingleItem {
+  public createSingleItem(params: CreatedItemParams): ISingleItem {
+    const { name, value, onChange, color } = params;
     if (!name || name.trim() === '') {
       throw new Error('Name must be provided!');
     }
@@ -57,7 +62,8 @@ export default class Controller {
     };
   }
 
-  public createItem(name: string, value: number, onChange: TOnChange, color: string): IItem {
+  public createItem(params: CreatedItemParams): IItem {
+    const { name, value, onChange, color } = params;
     const line = this._view.createLine(name, color);
     const namePrev = this._view.getLastItemName();
 
@@ -79,25 +85,18 @@ export default class Controller {
     const handle = this._view.createHandle();
     this._view.handles.push({
       handle: handle,
-      nameFrom: namePrev,
-      nameTo: name,
+      previousName: namePrev,
+      nextName: name,
     });
 
     return { name, line, handle };
   }
 
-  public createItems = function (items: IItemData[]): IItem | IItem[] {
-    if (items.length === 1) {
-      return this.createSingleItem(items[0].name, items[0].value, items[0].onChange, items[0].color);
-    }
+  public createItems(items: CreatedItemParams[]): CreateItemsOutput {
+    const singleLineItem = this.createSingleItem(items[0]);
+    const restItems = items.slice(1).map(item => this.createItem(item));
 
-    const firstItemData = items[0];
-    const singleLineItem = this.createSingleItem(firstItemData.name, firstItemData.value, firstItemData.onChange, firstItemData.color);
-    const restItems = items.slice(1).map(function (itemData) {
-      return this.createItem(itemData.name, itemData.value, itemData.onChange, itemData.color);
-    }, this);
-
-    return [singleLineItem].concat(restItems);
+    return [singleLineItem, ...restItems];
   }
 
   public divideSliderIntoEqualParts(): void {
@@ -120,7 +119,7 @@ export default class Controller {
     this._view.handles.forEach(function (handleData) {
       const item = {
         handle: handleData.handle,
-        name: handleData.nameTo,
+        name: handleData.nextName,
       };
 
       this.bindHandle(item);
@@ -141,25 +140,15 @@ export default class Controller {
     this._view.items[item.name].onChange(value);
   }
 
-  public addItemsToSlider(items: IItem | IItem[]): void {
-
-    if (!Array.isArray(items)) {
-      this._view.appendItem(items.line);
-      return;
-    }
+  public addItemsToSlider(items: CreateItemsOutput): void {
 
     var singleLine = items[0];
     this._view.appendItem(singleLine.line);
 
-    items.forEach((item, index, arr) => {
-      const isSingleLine = index === 0;
-      if (isSingleLine) {
-        return;
-      }
-
+    (items.slice(1) as IItem[]).forEach((item, index, arr) => {
       const itemName = item.name;
       const value = this._model.items[itemName].value;
-      const prevName = arr[index - 1].name;
+      const prevName = arr[index - 1]?.name || singleLine.name;
       const prevLineWidth = this._view.getPercentOf(prevName);
 
       this._view.setLineWidth(item.name, value + prevLineWidth);
@@ -229,22 +218,22 @@ export default class Controller {
 
       const handleData = this._view.handles[handleDataIndex];
 
-      const nameFrom = handleData.nameFrom;
-      const nameTo = handleData.nameTo;
+      const previousName = handleData.previousName;
+      const nextName = handleData.nextName;
 
       // view
-      this._view.setLineWidth(nameFrom, newHandleLeft);
+      this._view.setLineWidth(previousName, newHandleLeft);
 
       // model
       const diff = oldHandleLeft - newHandleLeft;
-      this._model.items[nameFrom].value -= diff;
-      this._model.items[nameTo].value += diff;
+      this._model.items[previousName].value -= diff;
+      this._model.items[nextName].value += diff;
 
-      const fromOnChange = this._view.items[nameFrom].onChange;
-      const toOnChange = this._view.items[nameTo].onChange;
+      const fromOnChange = this._view.items[previousName].onChange;
+      const toOnChange = this._view.items[nextName].onChange;
 
-      fromOnChange(this._model.items[nameFrom].value);
-      toOnChange(this._model.items[nameTo].value);
+      fromOnChange(this._model.items[previousName].value);
+      toOnChange(this._model.items[nextName].value);
     }
 
     this._view.makeHandleMoveable(handle, updateValues);
@@ -278,7 +267,7 @@ export default class Controller {
     if (isLastItem) {
       const handleData = this._view.findHandleDataByToLineName(name);
       const line = removingItemView.line;
-      const prevItemName = handleData && handleData.nameFrom;
+      const prevItemName = handleData && handleData.previousName;
       const valueTo = removingItemModel.value;
 
       if (!prevItemName) {
@@ -308,7 +297,7 @@ export default class Controller {
 
     // Generic case
     const handleData = this._view.findHandleDataByFromLineName(name);
-    const nextItemName = handleData && handleData.nameTo;
+    const nextItemName = handleData && handleData.nextName;
     const removingItemValue = removingItemModel.value;
     const line = removingItemView.line;
 
@@ -336,7 +325,7 @@ export default class Controller {
       const rightHandleData = this._view.findHandleDataByFromLineName(name);
 
       if (leftHandleData && rightHandleData) {
-        leftHandleData.nameTo = rightHandleData.nameTo;
+        leftHandleData.nextName = rightHandleData.nextName;
       }
     }
 

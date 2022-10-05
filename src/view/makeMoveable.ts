@@ -1,10 +1,5 @@
 import View from './view';
 
-export interface IMakeHandleMovable {
-  makeHandleMoveable: (handle: HTMLElement, updateValues: (a: number, b: number) => void) => void;
-  view: View;
-}
-
 type Platform = 'mobile' | 'desktop'
 
 interface PlatformDependetData<E extends Platform> {
@@ -35,24 +30,20 @@ const environment: Env = {
 };
 
 
-export class MakeHandleMoveable implements IMakeHandleMovable {
+export class MakeHandleMoveable {
 
-  constructor() {
+  constructor(view: View) {
     const platform: Platform = typeof window.orientation !== 'undefined' ? 'mobile' : 'desktop';
+
     this.enviroment = environment[platform];
+    this.view = view;
   }
+
+  private view: View;
 
   private enviroment: Env[keyof Env];
 
-  public view: View;
-
-
   public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
-
-    if (!this.view) {
-      console.warn('View field is not initialized');
-      return;
-    }
 
     handle[this.enviroment.eventName] = (event) => {
 

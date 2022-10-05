@@ -1,17 +1,17 @@
-import { IMakeHandleMovable } from './makeMoveable';
-import { TOnChange } from '../';
+import { MakeHandleMoveable } from './makeMoveable';
+import { OnChange } from '../';
 import './styles.scss';
 
 interface IHandle {
   handle: HTMLElement;
-  nameFrom: string;
-  nameTo: string;
+  previousName: string;
+  nextName: string;
 }
 
 export interface IItemView {
   name: string;
   line: HTMLElement;
-  onChange: TOnChange;
+  onChange: OnChange;
   _next: null | IItemView;
   _previous: null | IItemView;
 }
@@ -46,18 +46,18 @@ export default class View {
     item.parentNode.removeChild(item);
   }
 
-  public makeHandleMoveableCls: IMakeHandleMovable;
+  public sliderMovement: MakeHandleMoveable;
   public node: HTMLElement;
   public slider: HTMLElement;
   public items: TItems;
   public handles: IHandle[];
 
-  public constructor(node: HTMLElement, makeHandleMoveable: IMakeHandleMovable) {
+  public constructor(node: HTMLElement) {
     this.node = node;
     this.slider = View.createSlider();
     this.items = {};
     this.handles = [];
-    this.makeHandleMoveableCls = makeHandleMoveable;
+    this.sliderMovement = new MakeHandleMoveable(this);
 
     this.node.appendChild(this.slider);
   }
@@ -98,7 +98,7 @@ export default class View {
       .filter(item => this.items[item]._next === null, this);
 
     if (namesPrev.length !== 1) {
-      throw new Error('Error when trying to find last item');
+      throw new Error('Error during try to find last item');
     }
 
     return namesPrev[0];
@@ -128,7 +128,7 @@ export default class View {
 
   public findHandleDataByToLineName(name: string): null | IHandle {
     const handleIndex = this.handles.findIndex(handle => {
-      return handle.nameTo === name;
+      return handle.nextName === name;
     });
 
     return handleIndex === -1 ? null : this.handles[handleIndex];
@@ -136,19 +136,13 @@ export default class View {
 
   public findHandleDataByFromLineName(name: string): null | IHandle {
     const handleIndex = this.handles.findIndex(handle => {
-      return handle.nameFrom === name;
+      return handle.previousName === name;
     });
 
     return handleIndex === -1 ? null : this.handles[handleIndex];
   }
 
   public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
-    this.makeHandleMoveableCls.makeHandleMoveable(handle, updateValues);
-  }
-
-  public calculateZIndexForExtraLeftCase(handle: HTMLElement): void {
-    const index = this.handles.findIndex((handleData) => handleData.handle === handle);
-
-    handle.style.zIndex = String(index);
+    this.sliderMovement.makeHandleMoveable(handle, updateValues);
   }
 }
