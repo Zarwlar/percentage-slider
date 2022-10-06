@@ -38,10 +38,10 @@ addSetOfSlidersButton.addEventListener('click', function () {
   addSetOfSlidersButton.remove();
 
   const demoData = [
-    { name: 'Apples', value: 0, onChange: undefined, color: '#e0aaff' },
-    { name: 'Bananas', value: 0, onChange: undefined, color: '#c77dff' },
-    { name: 'Oranges', value: 0, onChange: undefined, color: '#9d4edd' },
-    { name: 'Avocados', value: 100, onChange: undefined, color: '#7b2cbf' },
+    { name: 'Apples', value: 25, onChange: undefined, color: '#2b2e4a' },
+    { name: 'Bananas', value: 25, onChange: undefined, color: '#e84545' },
+    { name: 'Oranges', value: 25, onChange: undefined, color: '#903749' },
+    { name: 'Avocados', value: 25, onChange: undefined, color: '#53354a' },
   ];
 
   const demoViewData = demoData.map(createSegmentValueView);

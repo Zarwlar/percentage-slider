@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <meta name="description" content="JavaScript percentage slider. Demo page.">
+  <meta name="description" content="JavaScript percentage range slider. Demo page.">
   <title>Document</title>
 </head>
 
@@ -13,27 +13,27 @@
   <div id="slider-root"></div>
 
   <div class="add-handle-containers">
-    <div class="add-handle-containers__row">
-      <h2>Add handle manually</h2>
+    <div class="add-handle-containers__row manually-demo">
+      <h2>Add a slider manually</h2>
 
-      <label for="item-name-input">Name (required)</label>
-      <input id="item-name-input" type="text">
+      <label for="slider-name-input">Name (required)</label>
+      <input id="slider-name-input" type="text">
 
-      <label for="item-value-input">Value</label>
-      <input id="item-value-input" type="text">
+      <label for="slider-value-input">Value</label>
+      <input id="slider-value-input" type="text">
 
-      <button class="btn" id="add-item-btn">Add Item</button>
+      <button class="btn" id="add-slider-button">Add Slider</button>
     </div>
 
-    <div class="add-handle-containers__row">
-      <h2>Add handles automatically</h2>
+    <div class="add-handle-containers__row quick-demo">
+      <h2>Quick Demo</h2>
       <div>
-        <button class="btn" id="add-set-of-items">Add Items</button>
+        <button class="btn" id="add-set-of-sliders">Add Sliders</button>
       </div>
     </div>
 
   </div>
-  <div id="items-list"></div>
+  <div id="list-of-value-value"></div>
 
   <script src="./client.ts" type="module"></script>
 </body>

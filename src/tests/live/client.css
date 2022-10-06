@@ -21,7 +21,7 @@ input {
   padding: 20px;
 }
 
-#add-item-btn {
+#add-slider-button {
   margin-bottom: 20px;
 }
 
@@ -38,6 +38,7 @@ input {
   display: inline-block;
   font-size: 20px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .btn_remove {
@@ -65,7 +66,7 @@ input {
   margin-top: 20px;
 }
 
-#item-value-input {
+#slider-value-input {
   margin-bottom: 20px;
 }
 
@@ -91,7 +92,7 @@ input {
   align-items: center;
 }
 
-#items-list {
+#list-of-value-value {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;

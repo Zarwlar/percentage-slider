@@ -1,5 +1,5 @@
 import Model, { IItemModel, IItemData } from './model';
-import View, { IItemView } from './view/view';
+import View, { IHandle, IItemView } from './view/view';
 
 interface IItem {
   name: string;
@@ -17,7 +17,7 @@ type InternalOnChange = (ids: number, params: { auto: boolean }) => void;
 
 type CreateItemsOutput = [ISingleItem, ...Array<IItem>]
 
-export type CreatedItemParams = Required<IItemData> & { onChange: InternalOnChange }
+export type CreatedItemParams = Required<Omit<IItemData, 'onChange'>> & { onChange: InternalOnChange }
 
 export default class Controller {
   private _model: Model;
@@ -26,12 +26,13 @@ export default class Controller {
   public constructor(model: Model, view: View) {
     this._model = model;
     this._view = view;
+    this.activateDragHandleListener();
   }
 
   public createSingleItem(params: CreatedItemParams): ISingleItem {
     const { name, value, onChange, color } = params;
     if (!name || name.trim() === '') {
-      throw new Error('Name must be provided!');
+      throw new Error('Name must be provided.');
     }
 
     const line = this._view.createLine(name, color);
@@ -53,7 +54,7 @@ export default class Controller {
 
     this._model.items[name] = itemModel;
 
-    onChange(value, { auto: value === this._model.total });
+    onChange(value, { auto: value === Model.TOTAL });
 
     return {
       line,
@@ -104,7 +105,7 @@ export default class Controller {
     const amount = names.length;
     const diffs = this._model.getEqualParts(amount);
 
-    names.forEach(function (name, index) {
+    names.forEach(function (this: Controller, name, index) {
       this._model.items[name].value = diffs[index];
       const onChange = this._view.items[name].onChange;
       onChange(diffs[index], { auto: true });
@@ -116,13 +117,13 @@ export default class Controller {
 
     }, this);
 
-    this._view.handles.forEach(function (handleData) {
+    this._view.handles.forEach(function (this: Controller, handleData: IHandle) {
       const item = {
         handle: handleData.handle,
         name: handleData.nextName,
       };
 
-      this.bindHandle(item);
+      this.updateHandlePosition(item);
     }, this);
 
   }
@@ -134,7 +135,7 @@ export default class Controller {
 
     this._view.setLineWidth(item.name, aggregation);
     this._view.appendItem(item.handle);
-    this.bindHandle(item);
+    this.updateHandlePosition(item);
     this._view.appendItem(item.line);
 
     this._view.items[item.name].onChange(value);
@@ -153,7 +154,7 @@ export default class Controller {
 
       this._view.setLineWidth(item.name, value + prevLineWidth);
       this._view.appendItem(item.handle);
-      this.bindHandle(item);
+      this.updateHandlePosition(item);
       this._view.appendItem(item.line);
 
       this._view.items[itemName].onChange(value);
@@ -167,11 +168,11 @@ export default class Controller {
   }
 
   public addItemToSliderGreedy(item: IItem): void {
-    const emptySpace = this._model.total - this._model.getSumOfItems();
+    const emptySpace = Model.TOTAL - this._model.getSumOfItems();
     this._model.items[item.name].value = emptySpace;
-    this._view.setLineWidth(item.name, this._model.total);
+    this._view.setLineWidth(item.name, Model.TOTAL);
     this._view.appendItem(item.handle);
-    this.bindHandle(item);
+    this.updateHandlePosition(item);
     this._view.appendItem(item.line);
 
     this._view.items[item.name].onChange(emptySpace, { auto: true });
@@ -201,22 +202,9 @@ export default class Controller {
     prevItem && this._view.items[prevItem.name].onChange(newPrevItemValue);
   }
 
-  public bindHandle(item: IItem): void {
-    const handle = item.handle;
-    const prevItem = this._view.items[item.name]._previous;
-
-    handle.style.left = prevItem && Math.round(this._view.getPercentOf(prevItem.name)) + '%' || '1%';
-
-    const updateValues = (oldHandleLeft: number, newHandleLeft: number) => {
-      const handleDataIndex = this._view.handles.findIndex(function (handleData) {
-        return handleData.handle === handle;
-      });
-
-      if (handleDataIndex === -1) {
-        throw new Error("Can't find handle");
-      }
-
-      const handleData = this._view.handles[handleDataIndex];
+  public activateDragHandleListener(): void {
+    const updateValues = (handle: HTMLElement, oldHandleLeft: number, newHandleLeft: number) => {
+      const handleData = this._view.getHandleData(handle);
 
       const previousName = handleData.previousName;
       const nextName = handleData.nextName;
@@ -236,7 +224,7 @@ export default class Controller {
       toOnChange(this._model.items[nextName].value);
     }
 
-    this._view.makeHandleMoveable(handle, updateValues);
+    this._view.makeHandleMoveable(updateValues);
   }
 
   public removeItem(name: string, onRemove: () => void): void {
@@ -277,12 +265,12 @@ export default class Controller {
       this._view.items[prevItemName]._next = null;
       this._model.items[prevItemName].value += valueTo;
 
-      this._view.setLineWidth(prevItemName, this._model.total);
+      this._view.setLineWidth(prevItemName, Model.TOTAL);
       this._view.items[prevItemName].onChange(this._model.items[prevItemName].value, { auto: true });
 
       if (handleData) {
         View.removeElement(handleData.handle);
-        this._view.removeFromHandles(handleData.handle);
+        this._view.removePreviousHandles(handleData.handle);
       }
 
       View.removeElement(line);
@@ -334,7 +322,7 @@ export default class Controller {
     this._view.items[nextItemName].onChange(this._model.items[nextItemName].value);
 
     if (handleData) {
-      this._view.removeFromHandles(handleData.handle);
+      this._view.removePreviousHandles(handleData.handle);
       View.removeElement(handleData.handle);
     }
     View.removeElement(line);
@@ -343,6 +331,12 @@ export default class Controller {
     delete this._view.items[name];
 
     onRemove();
+  }
 
+  private updateHandlePosition(item: Omit<IItem, 'line'>) {
+    const { handle } = item;
+    const prevItem = this._view.items[item.name]._previous;
+
+    handle.style.left = prevItem && Math.round(this._view.getPercentOf(prevItem.name)) + '%' || '1%';
   }
 }

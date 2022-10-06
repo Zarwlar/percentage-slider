@@ -1,6 +1,3 @@
-import './polyfills/Array';
-import './polyfills/DOM';
-
 import Model, { IItemData } from './model';
 import Controller, { CreatedItemParams } from './controller';
 import View from './view/view';
@@ -35,7 +32,7 @@ export default class PercentageSlider {
     const { value, onChange, name, color } = itemData;
 
     if (!this._model.isValidValue(value)) {
-      return { success: false, error: 'Total can\'t be greater than ' + this._model.total};
+      return { success: false, error: 'Total can\'t be greater than ' + Model.TOTAL};
     }
 
     const hasNameAlreadyTaken = this._model.items[name];
@@ -46,7 +43,7 @@ export default class PercentageSlider {
 
     if (this._model.hasNoItems()) {
       try {
-        const validValue = parseInt(`${value}`, 10) || this._model.total;
+        const validValue = parseInt(`${value}`, 10) || Model.TOTAL;
         const itemData = {
           name: name,
           value: validValue,
@@ -83,7 +80,7 @@ export default class PercentageSlider {
     }
 
     if (this._wasChanged) {
-      const noSpaceLeft = this._model.getSumOfItems() === this._model.total;
+      const noSpaceLeft = this._model.getSumOfItems() === Model.TOTAL;
       if (noSpaceLeft) {
         this._controller.addItemToSliderBySplitLastItem(item);
       } else {
@@ -110,9 +107,9 @@ export default class PercentageSlider {
 
     const itemsDataSum = itemsData.reduce((acc, curr) => acc + (curr.value || 0), 0);
 
-    if (itemsDataSum > this._model.total) {
+    if (itemsDataSum > Model.TOTAL) {
       return { success: false,
-               error: `Sum of items can not be great than ${this._model.total}`
+               error: `Sum of items can not be great than ${Model.TOTAL}`
              };
     }
 
@@ -145,14 +142,14 @@ export default class PercentageSlider {
   private _controller: Controller;
   private _wasChanged = false;
 
-  private mkOnChange(onChange?: (value: number) => void): () => void {
+  private mkOnChange(onChange?: (value: number) => void): ((value: number, options: { auto: boolean } ) => void) {
     return ((value: number, options: { auto: boolean }) => {
       var auto = options && options.auto;
-      var isNumber = typeof value === 'number' && !isNaN(value); // TODO: How it's possible?
 
       this._wasChanged = auto ? this._wasChanged : true;
 
-      onChange && isNumber && onChange(value);
+      onChange && onChange(value);
+
     }).bind(this);
   }
 

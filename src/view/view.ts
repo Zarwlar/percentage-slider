@@ -2,7 +2,7 @@ import { MakeHandleMoveable } from './makeMoveable';
 import { OnChange } from '../';
 import './styles.scss';
 
-interface IHandle {
+export interface IHandle {
   handle: HTMLElement;
   previousName: string;
   nextName: string;
@@ -22,28 +22,14 @@ export type TItems = {
 
 
 export default class View {
-  public static ids: number = 0;
+  public constructor(node: HTMLElement) {
+    this.node = node;
+    this.slider = this.createSlider();
+    this.items = {};
+    this.handles = [];
+    this.sliderMovement = new MakeHandleMoveable(this);
 
-  public static createSlider(): HTMLElement {
-    var slider = document.createElement('div');
-    slider.classList.add('slider');
-    slider.setAttribute('name', 'slider_' + ++View.ids);
-    return slider;
-  }
-
-  public static getRandomColor(): string {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  }
-
-  public static removeElement(item: HTMLElement): void {
-    if (!item.parentNode) { return; }
-
-    item.parentNode.removeChild(item);
+    this.node.appendChild(this.slider);
   }
 
   public sliderMovement: MakeHandleMoveable;
@@ -52,17 +38,7 @@ export default class View {
   public items: TItems;
   public handles: IHandle[];
 
-  public constructor(node: HTMLElement) {
-    this.node = node;
-    this.slider = View.createSlider();
-    this.items = {};
-    this.handles = [];
-    this.sliderMovement = new MakeHandleMoveable(this);
-
-    this.node.appendChild(this.slider);
-  }
-
-  public removeFromHandles(handle: HTMLElement): void {
+  public removePreviousHandles(handle: HTMLElement): void {
     this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
   }
 
@@ -80,6 +56,7 @@ export default class View {
     const handle = document.createElement('div');
 
     handle.classList.add('handle');
+    handle.setAttribute('data-handle', 'handle');
 
     return handle;
   }
@@ -90,6 +67,7 @@ export default class View {
 
   public setLineWidth(name: string, value: number): void {
     this.items[name].line.style.width = `${value}%`;
+    this.items[name].line.setAttribute('data-value', String(value));
   }
 
   public getLastItemName(): string {
@@ -142,7 +120,32 @@ export default class View {
     return handleIndex === -1 ? null : this.handles[handleIndex];
   }
 
-  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
-    this.sliderMovement.makeHandleMoveable(handle, updateValues);
+  public makeHandleMoveable(updateValues: (handle: HTMLElement, a: number, b: number) => void): void {
+    this.sliderMovement.makeHandleMoveable(updateValues);
+  }
+
+  private createSlider(): HTMLElement {
+    var slider = document.createElement('div');
+    slider.classList.add('slider');
+    slider.setAttribute('name', 'slider_' + View.ids);
+    View.ids = View.ids++;
+    return slider;
+  }
+
+  public static ids: number = 0;
+
+  public static getRandomColor(): string {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
+  public static removeElement(item: HTMLElement): void {
+    if (!item.parentNode) { return; }
+
+    item.parentNode.removeChild(item);
   }
 }

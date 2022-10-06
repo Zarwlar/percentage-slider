@@ -44,34 +44,37 @@ export class MakeHandleMoveable {
     this.view.slider[this.enviroment.eventName] = (event) => {
       const isHtmlElement = event.target instanceof HTMLElement
       const isHandle = isHtmlElement && ((event.target.closest('[data-handle]') as HTMLElement | undefined)?.dataset?.handle === 'handle');
-      if (isHandle) {
-          let handle = event.target;
 
-          const handleData = this.view.handles.find(candidate => candidate.handle === handle);
+      if (!isHandle) {
+        return;
+      }
 
-          const prevLineValue = handleData?.previousName && this.view.items[handleData?.previousName].line.dataset.value;
-          const nextLineValue = handleData?.nextName && this.view.items[handleData?.nextName].line.dataset.value;
+      let handle = event.target;
 
-          if (prevLineValue === undefined || nextLineValue === undefined) {
-            console.warn('Percentage Slider: It looks like you are trying to move a handle that does not limit two lines');
-            return;
-          }
+      const handleData = this.view.handles.find(candidate => candidate.handle === handle);
 
-          const isHandleLocked = prevLineValue === '0' && nextLineValue === '0';
+      const prevLineValue = handleData?.previousName && this.view.items[handleData?.previousName].line.dataset.value;
+      const nextLineValue = handleData?.nextName && this.view.items[handleData?.nextName].line.dataset.value;
 
-          const params: Omit<ProccessMovementParams, 'handle'> = {
-            event,
-            updateValues,
-            view: this.view,
-            enviroment: this.enviroment,
-          }
+      if (prevLineValue === undefined || nextLineValue === undefined) {
+        console.warn('Percentage Slider: It looks like you are trying to move a handle that does not limit two lines');
+        return;
+      }
 
-          if (isHandleLocked) {
-            handle = findHandleThatCanBeMoved(handle, this.view.handles, this.view.items);
-            processMovement({ ...params, handle });
-          } else {
-            processMovement({ ...params, handle });
-        }
+      const isHandleLocked = prevLineValue === '0' && nextLineValue === '0';
+
+      const params: Omit<ProccessMovementParams, 'handle'> = {
+        event,
+        updateValues,
+        view: this.view,
+        enviroment: this.enviroment,
+      }
+
+      if (isHandleLocked) {
+        handle = findHandleThatCanBeMoved(handle, this.view.handles, this.view.items);
+        processMovement({ ...params, handle });
+      } else {
+        processMovement({ ...params, handle });
       }
     }
   }
@@ -79,21 +82,6 @@ export class MakeHandleMoveable {
   private view: View;
 
   private enviroment: Env[keyof Env];
-}
-
-function findHandleThatCanBeMoved(handle: HTMLElement, handles: IHandle[], items: TItems): HTMLElement {
-  const restHandles = handles.filter(candidate => {
-    const isNotCurrentHandle = candidate.handle !== handle;
-
-    const prevVal = items[candidate.previousName].line.dataset.value;
-    const nextVal = items[candidate.nextName].line.dataset.value;
-
-    const hasNonZeroLine = prevVal !== '0' || nextVal !== '0';
-
-    return isNotCurrentHandle && hasNonZeroLine;
-  });
-
-  return restHandles.length > 0 ? restHandles[0].handle : handle;
 }
 
 interface ProccessMovementParams {
@@ -105,7 +93,9 @@ interface ProccessMovementParams {
 }
 
 function processMovement(params: ProccessMovementParams): void {
-  const { event, handle, view, enviroment, updateValues } = params;
+  const { event, view, enviroment, updateValues } = params;
+
+  let handle = params.handle;
 
   if (event.cancelable) {
     event.preventDefault();
@@ -133,6 +123,7 @@ function processMovement(params: ProccessMovementParams): void {
 
         if (newLeft < prevHandleLeft) {
           newLeft = prevHandleLeft;
+          handle = findHandleThatCanBeMovedToLeft(handle, view.handles, view.items);
           return;
         }
       }
@@ -163,6 +154,7 @@ function processMovement(params: ProccessMovementParams): void {
 
         if (newLeft > nextHandleLeft + offset) {
           newLeft = nextHandleLeft;
+          handle = findHandleThatCanBeMovedToRight(handle, view.handles, view.items);
           return;
         }
       }
@@ -196,5 +188,45 @@ function processMovement(params: ProccessMovementParams): void {
   document.addEventListener(enviroment.move.start, onMove);
   document.addEventListener(enviroment.move.finish, onMoveEnd);
 };
+
+
+function findHandleThatCanBeMoved(handle: HTMLElement, handles: IHandle[], items: TItems): HTMLElement {
+  const restHandles = handles.filter(candidate => {
+    const isNotCurrentHandle = candidate.handle !== handle;
+
+    const prevVal = items[candidate.previousName].line.dataset.value;
+    const nextVal = items[candidate.nextName].line.dataset.value;
+
+    const hasNonZeroLine = prevVal !== '0' || nextVal !== '0';
+
+    return isNotCurrentHandle && hasNonZeroLine;
+  });
+
+  return restHandles.length > 0 ? restHandles[0].handle : handle;
+}
+
+function findHandleThatCanBeMovedToRight(handle: HTMLElement, handles: IHandle[], items: TItems): HTMLElement {
+    const handleData = handles.find(candidate => candidate.handle === handle);
+
+    const nextLineName = handleData?.nextName && items[handleData.nextName].name;
+
+    const restHandles = handles.filter(candidate => {
+      return items[candidate.nextName]._previous?.name === nextLineName;
+    });
+
+    return restHandles.length > 0 ? restHandles[0].handle : handle;
+  }
+
+function findHandleThatCanBeMovedToLeft(handle: HTMLElement, handles: IHandle[], items: TItems) {
+  const handleData = handles.find(candidate => candidate.handle === handle);
+
+  const previousLineName = handleData?.previousName && items[handleData.previousName].name;
+
+  const restHandles = handles.filter(candidate => {
+    return items[candidate.previousName]._next?.name === previousLineName;
+  });
+
+  return restHandles.length > 0 ? restHandles[0].handle : handle;
+}
 
 export default MakeHandleMoveable;
