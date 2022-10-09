@@ -1,4 +1,4 @@
-It's JavaScript percentage slider with the possible of adding and removing handles. (Works in IE11+)<br>
+It's JavaScript percentage slider with the possible of adding and removing handles.<br>
 [Demo](https://zarwlar.github.io/percentage-slider/)
 
 Preview
@@ -24,18 +24,18 @@ const rootElem = document.getElementById('root');
 const slider = new PercentageSlider(rootElem);
 const SLIDER_NAME = 'SLIDER_1';
 
-const itemData = {
+const line = {
   name: SLIDER_NAME,
   value: 0,
   onChange: (value) => console.log(value),
   color: '#a3d70b'
 };
 
-slider.addItem(itemData);
+slider.addLine(line);
 
 /* Some work ... */
 
-slider.removeItem(SLIDER_NAME);
+slider.removeLine(SLIDER_NAME);
 ```
 
 API
@@ -53,8 +53,12 @@ Item: {
   onChange?: (value: Number) => void // Callback with a new value as an argument
 }
 ```
-#### addItems
+#### addLines
 - **items** — Array of `Item`'s
-#### removeItem
+#### removeLine
 - **name** — Name of removing item
 - **onRemove** — Callback performed after deleting an element
+
+Known Issues
+-------------
+When moving a handle, the other handles that the original slider passed through may shift if the user moved the handle too quickly

@@ -64,8 +64,8 @@ export class MakeHandleMoveable {
         this.view.lines[handleData?.nextLineName].line.dataset.value;
 
       if (prevLineValue === undefined || nextLineValue === undefined) {
-        console.warn(
-          'Percentage Slider: It looks like you are trying to move a handle that does not limit two lines'
+        console.error(
+          'Trying to move a handle that is not bounded by two lines.'
         );
         return;
       }

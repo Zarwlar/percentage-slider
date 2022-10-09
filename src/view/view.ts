@@ -93,7 +93,7 @@ export default class View {
     return handleData;
   }
 
-  public getPercentOf(name: string): number {
+  public getLineWidthInPercent(name: string): number {
     const particularLineWidth = this.lines[name].line.offsetWidth;
     return this.convertToPercent(particularLineWidth);
   }
@@ -128,12 +128,12 @@ export default class View {
   private createSlider(): HTMLElement {
     var slider = document.createElement('div');
     slider.classList.add('slider');
-    slider.setAttribute('name', 'slider_' + View.ids);
-    View.ids = View.ids++;
+    slider.setAttribute('name', 'slider_' + View.sliderId);
+    View.sliderId = View.sliderId++;
     return slider;
   }
 
-  public static ids: number = 0;
+  public static sliderId: number = 0;
 
   public static getRandomColor(): string {
     var letters = '0123456789ABCDEF';

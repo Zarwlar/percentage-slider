@@ -47,17 +47,18 @@ input {
   font-weight: 400;
 }
 
-.remove-item-container {
+.remove-line-container {
   margin: 10px auto 0;
 }
 
-.item-name {
+.line-name {
   margin-right: 10px;
 }
 
-.item-name,
-.item-value {
+.line-name,
+.line-value {
   font-weight: 700;
+  color: #fff;
 }
 
 #add-more,
@@ -103,7 +104,7 @@ input {
   text-align: center;
 }
 
-.item-view {
+.line-view {
   margin-right: 5px;
   padding: 20px;
   width: 150px;
@@ -111,9 +112,4 @@ input {
   border-radius: 20px;
   display: flex;
   flex-direction: column;
-}
-
-.item-name,
-.item-value {
-  color: #fff;
 }

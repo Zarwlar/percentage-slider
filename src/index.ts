@@ -18,9 +18,9 @@ export default class PercentageSlider {
       return;
     }
 
-    this._model = new Model();
-    this._view = new View(node);
-    this._controller = new Controller(this._model, this._view);
+    this.model = new Model();
+    this.view = new View(node);
+    this.controller = new Controller(this.model, this.view);
   }
 
   public addLine({
@@ -29,20 +29,24 @@ export default class PercentageSlider {
     name,
     color,
   }: LineInitParams): Result<void> {
-    if (!this._model.isValidValue(value)) {
+    if (!this.model.isValidValue(value)) {
       return {
         success: false,
-        error: "Total can't be greater than " + Model.TOTAL,
+        error: "Total can't be greater than " + Model.TOTAL + '.',
       };
     }
 
-    const hasNameAlreadyTaken = this._model.lines[name];
+    const hasNameAlreadyTaken = this.model.lines[name];
 
-    if (hasNameAlreadyTaken) {
-      return { success: false, error: `The name '${name}' is already in use` };
+    if (!name || name.trim().length === 0) {
+      return { success: false, error: `The name can't be empty.` };
     }
 
-    if (this._model.hasNoLines()) {
+    if (hasNameAlreadyTaken) {
+      return { success: false, error: `The name '${name}' is already in use.` };
+    }
+
+    if (this.model.hasNoLines()) {
       try {
         const validValue = parseInt(`${value}`, 10) || Model.TOTAL;
         const lineParams = {
@@ -52,9 +56,9 @@ export default class PercentageSlider {
           color: color || View.getRandomColor(),
         };
 
-        const lineData = this._controller.createSingleLine(lineParams);
+        const lineData = this.controller.createSingleLine(lineParams);
 
-        this._view.appendElement(lineData.line);
+        this.view.appendElement(lineData.line);
 
         if (value && !isNaN(value)) {
           this._wasChanged = true;
@@ -72,32 +76,32 @@ export default class PercentageSlider {
       color: color || View.getRandomColor(),
     };
 
-    const lwh = this._controller.createLineWithHandle(lineParams);
+    const lwh = this.controller.createLineWithHandle(lineParams);
 
     if (value && !isNaN(value)) {
       this._wasChanged = true;
-      this._controller.addLineWithHandleToSlider(value, lwh);
+      this.controller.addLineWithHandleToSlider(value, lwh);
       return { success: true };
     }
 
     if (this._wasChanged) {
-      const noSpaceLeft = this._model.getSumOfLines() === Model.TOTAL;
+      const noSpaceLeft = this.model.getSumOfLines() === Model.TOTAL;
       if (noSpaceLeft) {
-        this._controller.addLineWithHandleToSliderBySplitLastLine(lwh);
+        this.controller.addLineWithHandleToSliderBySplitLastLine(lwh);
       } else {
-        this._controller.addLineWithHandleToSliderGreedy(lwh);
+        this.controller.addLineWithHandleToSliderGreedy(lwh);
       }
 
       return { success: true };
     }
 
-    this._controller.addLineWithHandleToSliderAuto(lwh);
+    this.controller.addLineWithHandleToSliderAuto(lwh);
 
     return { success: true };
   }
 
   public addLines(lines: LineInitParams[]): Result<void> {
-    const someLinesAlreadyAdded = Object.keys(this._model.lines).length !== 0;
+    const someLinesAlreadyAdded = Object.keys(this.model.lines).length !== 0;
 
     if (someLinesAlreadyAdded) {
       return {
@@ -115,14 +119,14 @@ export default class PercentageSlider {
     if (linesDataSum > Model.TOTAL) {
       return {
         success: false,
-        error: `Sum of lines can not be great than ${Model.TOTAL}`,
+        error: `Sum of lines can not be great than ${Model.TOTAL}.`,
       };
     }
 
     if (lines.length === 0) {
       return {
         success: false,
-        error: 'Cannot initialize strips with an empty array',
+        error: 'Cannot initialize strips with an empty array.',
       };
     }
 
@@ -137,20 +141,20 @@ export default class PercentageSlider {
       }
     );
 
-    var internalLines = this._controller.createLines(internalLineInitParams);
+    var internalLines = this.controller.createLines(internalLineInitParams);
 
-    this._controller.addLinesToSlider(internalLines);
+    this.controller.addLinesToSlider(internalLines);
 
     return { success: true };
   }
 
   public removeLine(name: string, onRemove?: () => void): void {
-    this._controller.removeLine(name, this.mkOnRemove(onRemove));
+    this.controller.removeLine(name, this.mkOnRemove(onRemove));
   }
 
-  private _model: Model;
-  private _view: View;
-  private _controller: Controller;
+  private model: Model;
+  private view: View;
+  private controller: Controller;
   private _wasChanged = false;
 
   private mkOnChange(
@@ -172,4 +176,10 @@ export default class PercentageSlider {
   }
 }
 
-(window as any).PercentageSlider = PercentageSlider;
+declare global {
+  interface Window {
+    PercentageSlider: typeof PercentageSlider;
+  }
+}
+
+window.PercentageSlider = PercentageSlider;
