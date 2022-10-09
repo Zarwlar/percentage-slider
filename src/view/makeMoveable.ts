@@ -53,8 +53,8 @@ export class MakeHandleMoveable {
 
       const handleData = this.view.getHandleData(handle);
 
-      const prevLineValue = handleData?.previousName && this.view.lines[handleData?.previousName].line.dataset.value;
-      const nextLineValue = handleData?.nextName && this.view.lines[handleData?.nextName].line.dataset.value;
+      const prevLineValue = handleData?.previousLineName && this.view.lines[handleData?.previousLineName].line.dataset.value;
+      const nextLineValue = handleData?.nextLineName && this.view.lines[handleData?.nextLineName].line.dataset.value;
 
       if (prevLineValue === undefined || nextLineValue === undefined) {
         console.warn('Percentage Slider: It looks like you are trying to move a handle that does not limit two lines');
@@ -113,7 +113,7 @@ function processMovement(params: ProccessMovementParams): void {
     let newLeft = enviroment.getClientX(event as TouchEvent & MouseEvent) - shiftX - view.slider.getBoundingClientRect().left;
 
     const considerLeftEdgeCase = () => {
-      const previousName = view.getHandleData(handle).previousName;
+      const previousName = view.getHandleData(handle).previousLineName;
       const prevHandleData = view.findHandleDataByToLineName(previousName);
       const isFirstHandle = prevHandleData === null;
 
@@ -144,7 +144,7 @@ function processMovement(params: ProccessMovementParams): void {
         offset = longestLine && (longestLine as HTMLElement).getBoundingClientRect().left || offset;
       }
 
-      const nextName = view.getHandleData(handle).nextName;
+      const nextName = view.getHandleData(handle).nextLineName;
       const nextHandleData = view.findHandleDataByFromLineName(nextName);
       const isLastLine = nextHandleData === null;
 
@@ -196,11 +196,11 @@ interface ParamsToFindNewHandle {
 }
 
 function findHandleThatCanBeMoved({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
-  const restHandles = Array.from(handles.entries()).filter(([iteratedHandle, { previousName, nextName }]) => {
+  const restHandles = Array.from(handles.entries()).filter(([iteratedHandle, { previousLineName, nextLineName }]) => {
     const isNotCurrentHandle = iteratedHandle !== handle;
 
-    const prevVal = lines[previousName].line.dataset.value;
-    const nextVal = lines[nextName].line.dataset.value;
+    const prevVal = lines[previousLineName].line.dataset.value;
+    const nextVal = lines[nextLineName].line.dataset.value;
 
     const hasNonZeroLine = prevVal !== '0' || nextVal !== '0';
 
@@ -213,10 +213,10 @@ function findHandleThatCanBeMoved({ handle, handles, lines }: ParamsToFindNewHan
 function findHandleThatCanBeMovedToRight({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
     const handleData = handles.get(handle);
 
-    const nextLineName = handleData?.nextName && lines[handleData.nextName].name;
+    const candidateLineName = handleData?.nextLineName && lines[handleData.nextLineName].name;
 
-    const restHandles = Array.from(handles.entries()).filter(([_, { nextName }]) => {
-      return lines[nextName]._previous?.name === nextLineName;
+    const restHandles = Array.from(handles.entries()).filter(([_, { nextLineName }]) => {
+      return lines[nextLineName].previousLineView?.name === candidateLineName;
     });
 
     return restHandles.length > 0 ? restHandles[0][0] : handle;
@@ -225,10 +225,10 @@ function findHandleThatCanBeMovedToRight({ handle, handles, lines }: ParamsToFin
 function findHandleThatCanBeMovedToLeft({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
   const handleData = handles.get(handle);
 
-  const previousLineName = handleData?.previousName && lines[handleData.previousName].name;
+  const candidateLineName = handleData?.previousLineName && lines[handleData.previousLineName].name;
 
-  const restHandles = Array.from(handles.entries()).filter(([_, { previousName }]) => {
-    return lines[previousName]._next?.name === previousLineName;
+  const restHandles = Array.from(handles.entries()).filter(([_, { previousLineName }]) => {
+    return lines[previousLineName].nextLineView?.name === candidateLineName;
   });
 
   return restHandles.length > 0 ? restHandles[0][0] : handle;

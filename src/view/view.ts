@@ -3,16 +3,16 @@ import './styles.scss';
 
 export interface Handle {
   handle: HTMLElement;
-  previousName: string;
-  nextName: string;
+  previousLineName: string;
+  nextLineName: string;
 }
 
 export interface LineView {
   name: string;
   line: HTMLElement;
   onChange: OnChange;
-  _next: null | LineView;
-  _previous: null | LineView;
+  nextLineView: null | LineView;
+  previousLineView: null | LineView;
 }
 
 export type LineViewMap = {
@@ -74,7 +74,7 @@ export default class View {
   public getLastLineName(): string {
     const namesPrev = Object
       .keys(this.lines)
-      .filter(lineView => this.lines[lineView]._next === null, this);
+      .filter(lineView => this.lines[lineView].nextLineView === null, this);
 
     if (namesPrev.length !== 1) {
       throw new Error('Error during try to find last line name');
@@ -104,13 +104,13 @@ export default class View {
   }
 
   public findHandleDataByToLineName(name: string): null | Handle {
-    const r = Array.from(this.handles.values()).find(candidate => candidate.nextName === name);
+    const r = Array.from(this.handles.values()).find(c => c.nextLineName === name);
 
     return r ? r : null;
   }
 
   public findHandleDataByFromLineName(name: string): null | Handle {
-    const r = Array.from(this.handles.values()).find(candidate => candidate.previousName === name);
+    const r = Array.from(this.handles.values()).find(c => c.previousLineName === name);
 
     return r ? r : null;
   }

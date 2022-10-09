@@ -48,8 +48,8 @@ export default class Controller {
       name: name,
       line: line,
       onChange: onChange,
-      _next: null,
-      _previous: null,
+      nextLineView: null,
+      previousLineView: null,
     };
 
     const lineModel: LineModel = {
@@ -85,17 +85,17 @@ export default class Controller {
       name: name,
       line: line,
       onChange: onChange,
-      _previous: this._view.lines[namePrev],
-      _next: null,
+      previousLineView: this._view.lines[namePrev],
+      nextLineView: null,
     };
 
-    this._view.lines[namePrev]._next = this._view.lines[name];
+    this._view.lines[namePrev].nextLineView = this._view.lines[name];
 
     const handle = this._view.createHandle();
     this._view.handles.set(handle, {
       handle: handle,
-      previousName: namePrev,
-      nextName: name,
+      previousLineName: namePrev,
+      nextLineName: name,
     });
 
     return { name, line, handle };
@@ -128,7 +128,7 @@ export default class Controller {
     this._view.handles.forEach(function (this: Controller, handleData: Handle) {
       const partialHandleData = {
         handle: handleData.handle,
-        name: handleData.nextName,
+        name: handleData.nextLineName,
       };
 
       this.updateHandlePosition(partialHandleData);
@@ -187,7 +187,7 @@ export default class Controller {
   }
 
   public addLineWithHandleToSliderBySplitLastLine(lwh: LineWithHandle): void {
-    const prevLineView = this._view.lines[lwh.name]._previous;
+    const prevLineView = this._view.lines[lwh.name].previousLineView;
     const prevLineValue = prevLineView && this._model.lines[prevLineView.name].value || 0;
 
     const prevDividedInto2 = prevLineValue / 2;
@@ -214,8 +214,8 @@ export default class Controller {
     const updateValues = (handle: HTMLElement, oldHandleLeft: number, newHandleLeft: number) => {
       const handleData = this._view.getHandleData(handle);
 
-      const previousName = handleData.previousName;
-      const nextName = handleData.nextName;
+      const previousName = handleData.previousLineName;
+      const nextName = handleData.nextLineName;
 
       // view
       this._view.setLineWidth(previousName, newHandleLeft);
@@ -263,14 +263,14 @@ export default class Controller {
     if (isLastLine) {
       const handleData = this._view.findHandleDataByToLineName(name);
       const line = removingLineView.line;
-      const prevLineName = handleData && handleData.previousName;
+      const prevLineName = handleData && handleData.previousLineName;
       const valueTo = removingLineModel.value;
 
       if (!prevLineName) {
         throw new Error('Unexpected behavior during remove last line');
       }
 
-      this._view.lines[prevLineName]._next = null;
+      this._view.lines[prevLineName].nextLineView = null;
       this._model.lines[prevLineName].value += valueTo;
 
       this._view.setLineWidth(prevLineName, Model.TOTAL);
@@ -293,7 +293,7 @@ export default class Controller {
 
     // Generic case
     const handleData = this._view.findHandleDataByFromLineName(name);
-    const nextLineName = handleData && handleData.nextName;
+    const nextLineName = handleData && handleData.nextLineName;
     const removingLineValue = removingLineModel.value;
     const line = removingLineView.line;
 
@@ -302,13 +302,13 @@ export default class Controller {
     }
 
     this._model.lines[nextLineName].value += removingLineValue;
-    this._view.lines[nextLineName]._previous = removingLineView._previous;
+    this._view.lines[nextLineName].previousLineView = removingLineView.previousLineView;
 
-    const isFirstLine = removingLineView._previous === null;
+    const isFirstLine = removingLineView.previousLineView === null;
 
     if (!isFirstLine) {
-      if (removingLineView._previous) {
-        removingLineView._previous._next = removingLineView._next;
+      if (removingLineView.previousLineView) {
+        removingLineView.previousLineView.name = removingLineView.name;
       }
     }
 
@@ -321,7 +321,7 @@ export default class Controller {
       const rightHandleData = this._view.findHandleDataByFromLineName(name);
 
       if (leftHandleData && rightHandleData) {
-        leftHandleData.nextName = rightHandleData.nextName;
+        leftHandleData.nextLineName = rightHandleData.nextLineName;
       }
     }
 
@@ -342,7 +342,7 @@ export default class Controller {
   }
 
   private updateHandlePosition({ handle, name }: Omit<LineWithHandle, 'line'>) {
-    const prevLineView = this._view.lines[name]._previous;
+    const prevLineView = this._view.lines[name].previousLineView;
     handle.style.left = prevLineView && Math.round(this._view.getPercentOf(prevLineView.name)) + '%' || '1%';
   }
 }
