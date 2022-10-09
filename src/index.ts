@@ -1,5 +1,5 @@
 import Model from './model';
-import Controller, { CreatedItemParams, LineInitParams } from './controller';
+import Controller, { InternalLineInitParams, LineInitParams } from './controller';
 import View from './view/view';
 
 export type SuccessResult<T> =
@@ -26,32 +26,30 @@ export default class PercentageSlider {
     this._controller = new Controller(this._model, this._view);
   }
 
-  public addItem(itemData: LineInitParams): Result<void> {
-    const { value, onChange, name, color } = itemData;
-
+  public addLine({ value, onChange, name, color }: LineInitParams): Result<void> {
     if (!this._model.isValidValue(value)) {
       return { success: false, error: 'Total can\'t be greater than ' + Model.TOTAL};
     }
 
-    const hasNameAlreadyTaken = this._model.items[name];
+    const hasNameAlreadyTaken = this._model.lines[name];
 
     if (hasNameAlreadyTaken) {
       return { success: false, error: `The name '${name}' is already in use`};
     }
 
-    if (this._model.hasNoItems()) {
+    if (this._model.hasNoLines()) {
       try {
         const validValue = parseInt(`${value}`, 10) || Model.TOTAL;
-        const itemData = {
+        const lineParams = {
           name: name,
           value: validValue,
           onChange: this.mkOnChange(onChange),
           color: color || View.getRandomColor()
         }
 
-        const item = this._controller.createSingleItem(itemData);
+        const lineData = this._controller.createSingleLine(lineParams);
 
-        this._view.appendItem(item.line);
+        this._view.appendElement(lineData.line);
 
         if (value && !isNaN(value)) {
           this._wasChanged = true;
@@ -62,77 +60,77 @@ export default class PercentageSlider {
       }
     }
 
-    const itemParams = {
+    const lineParams = {
       name,
       value: (value || 0),
       onChange: this.mkOnChange(onChange),
       color: color || View.getRandomColor(),
     };
 
-    const item = this._controller.createItem(itemParams);
+    const lwh = this._controller.createLineWithHandle(lineParams);
 
     if (value && !isNaN(value)) {
       this._wasChanged = true;
-      this._controller.addItemToSlider(value, item);
+      this._controller.addLineWithHandleToSlider(value, lwh);
       return { success: true };
     }
 
     if (this._wasChanged) {
-      const noSpaceLeft = this._model.getSumOfItems() === Model.TOTAL;
+      const noSpaceLeft = this._model.getSumOfLines() === Model.TOTAL;
       if (noSpaceLeft) {
-        this._controller.addItemToSliderBySplitLastItem(item);
+        this._controller.addLineWithHandleToSliderBySplitLastLine(lwh);
       } else {
-        this._controller.addItemToSliderGreedy(item);
+        this._controller.addLineWithHandleToSliderGreedy(lwh);
       }
 
       return { success: true };
     }
 
-    this._controller.addItemToSliderAuto(item);
+    this._controller.addLineWithHandleToSliderAuto(lwh);
 
     return { success: true };
   }
 
-  public addItems(itemsData: LineInitParams[]): Result<void> {
+  public addLines(lines: LineInitParams[]): Result<void> {
 
-    const someItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
+    const someLinesAlreadyAdded = Object.keys(this._model.lines).length !== 0;
 
-    if (someItemsAlreadyAdded) {
+    if (someLinesAlreadyAdded) {
       return { success: false,
-               error: 'Items can not be added to already initialized slider'
+               error: 'Lines can not be added to already initialized slider. Instead, you can add lines one at a time.'
              };
     }
 
-    const itemsDataSum = itemsData.reduce((acc, curr) => acc + (curr.value || 0), 0);
+    const linesDataSum = lines.reduce((acc, curr) => acc + (curr.value || 0), 0);
 
-    if (itemsDataSum > Model.TOTAL) {
+    if (linesDataSum > Model.TOTAL) {
       return { success: false,
-               error: `Sum of items can not be great than ${Model.TOTAL}`
+               error: `Sum of lines can not be great than ${Model.TOTAL}`
              };
     }
 
-    if (itemsData.length === 0) {
-      return { success: false, error: 'Items length can not be equal 0' };
+    if (lines.length === 0) {
+      return { success: false, error: 'Cannot initialize strips with an empty array' };
     }
 
-    let convertedItems: Array<CreatedItemParams> = itemsData.map((itemData: LineInitParams) => {
+    let internalLineInitParams: Array<InternalLineInitParams> = lines.map((line: LineInitParams) => {
       return {
-        ...itemData,
-        color: itemData.color || View.getRandomColor(),
-        value: (itemData.value || 0),
-        onChange: this.mkOnChange(itemData.onChange),
+        ...line,
+        color: line.color || View.getRandomColor(),
+        value: (line.value || 0),
+        onChange: this.mkOnChange(line.onChange),
       };
     });
 
-    var items = this._controller.createItems(convertedItems);
+    var internalLines = this._controller.createLines(internalLineInitParams);
 
-    this._controller.addItemsToSlider(items);
+    this._controller.addLinesToSlider(internalLines);
 
     return { success: true };
   }
 
-  public removeItem(name: string, onRemove?: () => void): void {
-    this._controller.removeItem(name, this.mkOnRemove(onRemove));
+  public removeLine(name: string, onRemove?: () => void): void {
+    this._controller.removeLine(name, this.mkOnRemove(onRemove));
   }
 
   private _model: Model;

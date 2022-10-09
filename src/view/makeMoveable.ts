@@ -53,8 +53,8 @@ export class MakeHandleMoveable {
 
       const handleData = this.view.handles.find(candidate => candidate.handle === handle);
 
-      const prevLineValue = handleData?.previousName && this.view.items[handleData?.previousName].line.dataset.value;
-      const nextLineValue = handleData?.nextName && this.view.items[handleData?.nextName].line.dataset.value;
+      const prevLineValue = handleData?.previousName && this.view.lines[handleData?.previousName].line.dataset.value;
+      const nextLineValue = handleData?.nextName && this.view.lines[handleData?.nextName].line.dataset.value;
 
       if (prevLineValue === undefined || nextLineValue === undefined) {
         console.warn('Percentage Slider: It looks like you are trying to move a handle that does not limit two lines');
@@ -71,7 +71,7 @@ export class MakeHandleMoveable {
       }
 
       if (isHandleLocked) {
-        handle = findHandleThatCanBeMoved(handle, this.view.handles, this.view.items);
+        handle = findHandleThatCanBeMoved({ handle: handle, handles: this.view.handles, lines: this.view.lines });
         processMovement({ ...params, handle });
       } else {
         processMovement({ ...params, handle });
@@ -123,7 +123,7 @@ function processMovement(params: ProccessMovementParams): void {
 
         if (newLeft < prevHandleLeft) {
           newLeft = prevHandleLeft;
-          handle = findHandleThatCanBeMovedToLeft(handle, view.handles, view.items);
+          handle = findHandleThatCanBeMovedToLeft({ handle: handle, handles: view.handles, lines: view.lines });
           return;
         }
       }
@@ -154,7 +154,7 @@ function processMovement(params: ProccessMovementParams): void {
 
         if (newLeft > nextHandleLeft + offset) {
           newLeft = nextHandleLeft;
-          handle = findHandleThatCanBeMovedToRight(handle, view.handles, view.items);
+          handle = findHandleThatCanBeMovedToRight({ handle: handle, handles: view.handles, lines: view.lines });
           return;
         }
       }
@@ -189,13 +189,18 @@ function processMovement(params: ProccessMovementParams): void {
   document.addEventListener(enviroment.move.finish, onMoveEnd);
 };
 
+interface ParamsToFindNewHandle {
+  handle: HTMLElement,
+  handles: Handle[],
+  lines: LineViewMap
+}
 
-function findHandleThatCanBeMoved(handle: HTMLElement, handles: Handle[], items: LineViewMap): HTMLElement {
+function findHandleThatCanBeMoved({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
   const restHandles = handles.filter(candidate => {
     const isNotCurrentHandle = candidate.handle !== handle;
 
-    const prevVal = items[candidate.previousName].line.dataset.value;
-    const nextVal = items[candidate.nextName].line.dataset.value;
+    const prevVal = lines[candidate.previousName].line.dataset.value;
+    const nextVal = lines[candidate.nextName].line.dataset.value;
 
     const hasNonZeroLine = prevVal !== '0' || nextVal !== '0';
 
@@ -205,25 +210,25 @@ function findHandleThatCanBeMoved(handle: HTMLElement, handles: Handle[], items:
   return restHandles.length > 0 ? restHandles[0].handle : handle;
 }
 
-function findHandleThatCanBeMovedToRight(handle: HTMLElement, handles: Handle[], items: LineViewMap): HTMLElement {
+function findHandleThatCanBeMovedToRight({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
     const handleData = handles.find(candidate => candidate.handle === handle);
 
-    const nextLineName = handleData?.nextName && items[handleData.nextName].name;
+    const nextLineName = handleData?.nextName && lines[handleData.nextName].name;
 
     const restHandles = handles.filter(candidate => {
-      return items[candidate.nextName]._previous?.name === nextLineName;
+      return lines[candidate.nextName]._previous?.name === nextLineName;
     });
 
     return restHandles.length > 0 ? restHandles[0].handle : handle;
   }
 
-function findHandleThatCanBeMovedToLeft(handle: HTMLElement, handles: Handle[], items: LineViewMap) {
+function findHandleThatCanBeMovedToLeft({ handle, handles, lines }: ParamsToFindNewHandle) {
   const handleData = handles.find(candidate => candidate.handle === handle);
 
-  const previousLineName = handleData?.previousName && items[handleData.previousName].name;
+  const previousLineName = handleData?.previousName && lines[handleData.previousName].name;
 
   const restHandles = handles.filter(candidate => {
-    return items[candidate.previousName]._next?.name === previousLineName;
+    return lines[candidate.previousName]._next?.name === previousLineName;
   });
 
   return restHandles.length > 0 ? restHandles[0].handle : handle;

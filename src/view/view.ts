@@ -26,7 +26,7 @@ export default class View {
   public constructor(node: HTMLElement) {
     this.node = node;
     this.slider = this.createSlider();
-    this.items = {};
+    this.lines = {};
     this.handles = [];
     this.sliderMovement = new MakeHandleMoveable(this);
 
@@ -36,7 +36,7 @@ export default class View {
   public sliderMovement: MakeHandleMoveable;
   public node: HTMLElement;
   public slider: HTMLElement;
-  public items: LineViewMap;
+  public lines: LineViewMap;
   public handles: Handle[];
 
   public removePreviousHandles(handle: HTMLElement): void {
@@ -62,22 +62,22 @@ export default class View {
     return handle;
   }
 
-  public appendItem(item: HTMLElement): void {
-    this.slider.insertBefore(item, this.slider.firstChild);
+  public appendElement(el: HTMLElement): void {
+    this.slider.insertBefore(el, this.slider.firstChild);
   }
 
   public setLineWidth(name: string, value: number): void {
-    this.items[name].line.style.width = `${value}%`;
-    this.items[name].line.setAttribute('data-value', String(value));
+    this.lines[name].line.style.width = `${value}%`;
+    this.lines[name].line.setAttribute('data-value', String(value));
   }
 
-  public getLastItemName(): string {
+  public getLastLineName(): string {
     const namesPrev = Object
-      .keys(this.items)
-      .filter(item => this.items[item]._next === null, this);
+      .keys(this.lines)
+      .filter(lineView => this.lines[lineView]._next === null, this);
 
     if (namesPrev.length !== 1) {
-      throw new Error('Error during try to find last item');
+      throw new Error('Error during try to find last line name');
     }
 
     return namesPrev[0];
@@ -96,7 +96,7 @@ export default class View {
   }
 
   public getPercentOf(name: string): number {
-    const particularLineWidth = this.items[name].line.offsetWidth;
+    const particularLineWidth = this.lines[name].line.offsetWidth;
     return this.convertToPercent(particularLineWidth);
   }
 
@@ -144,9 +144,9 @@ export default class View {
     return color;
   }
 
-  public static removeElement(item: HTMLElement): void {
-    if (!item.parentNode) { return; }
+  public static removeElement(el: HTMLElement): void {
+    if (!el.parentNode) { return; }
 
-    item.parentNode.removeChild(item);
+    el.parentNode.removeChild(el);
   }
 }

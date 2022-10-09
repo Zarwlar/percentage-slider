@@ -4,7 +4,7 @@ export interface LineModel {
 }
 
 export default class Model {
-  public items: Record<string, LineModel> = {};
+  public lines: Record<string, LineModel> = {};
 
   static readonly TOTAL: number = 100;
 
@@ -34,21 +34,21 @@ export default class Model {
     return values;
   }
 
-  public getSumOfItems(): number {
+  public getSumOfLines(): number {
     return Object
-      .keys(this.items)
-      .reduce((acc, item) => {
-        const currValue = this.items[item].value;
+      .keys(this.lines)
+      .reduce((acc, line) => {
+        const currValue = this.lines[line].value;
         return isNaN(currValue) ? acc : acc + currValue;
       }, 0);
   }
 
   public isValidValue(value?: number): boolean {
     var value = value && isNaN(value) ? 0 : value;
-    return this.getSumOfItems() + (value || 0) <= Model.TOTAL;
+    return this.getSumOfLines() + (value || 0) <= Model.TOTAL;
   }
 
-  public hasNoItems(): boolean {
-    return Object.keys(this.items).length === 0;
+  public hasNoLines(): boolean {
+    return Object.keys(this.lines).length === 0;
   }
 }
