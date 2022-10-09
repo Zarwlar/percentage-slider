@@ -1,8 +1,6 @@
-import Model, { IItemData } from './model';
-import Controller, { CreatedItemParams } from './controller';
+import Model from './model';
+import Controller, { CreatedItemParams, LineInitParams } from './controller';
 import View from './view/view';
-
-export type OnChange = (ids: number, params?: { auto: boolean }) => void;
 
 export type SuccessResult<T> =
   { success: true,
@@ -28,7 +26,7 @@ export default class PercentageSlider {
     this._controller = new Controller(this._model, this._view);
   }
 
-  public addItem(itemData: IItemData): Result<void> {
+  public addItem(itemData: LineInitParams): Result<void> {
     const { value, onChange, name, color } = itemData;
 
     if (!this._model.isValidValue(value)) {
@@ -95,7 +93,7 @@ export default class PercentageSlider {
     return { success: true };
   }
 
-  public addItems(itemsData: IItemData[]): Result<void> {
+  public addItems(itemsData: LineInitParams[]): Result<void> {
 
     const someItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
 
@@ -117,7 +115,7 @@ export default class PercentageSlider {
       return { success: false, error: 'Items length can not be equal 0' };
     }
 
-    let convertedItems: Array<CreatedItemParams> = itemsData.map((itemData: IItemData) => {
+    let convertedItems: Array<CreatedItemParams> = itemsData.map((itemData: LineInitParams) => {
       return {
         ...itemData,
         color: itemData.color || View.getRandomColor(),

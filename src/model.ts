@@ -1,17 +1,10 @@
-export interface IItemModel {
+export interface LineModel {
   name: string;
   value: number;
-}
-
-export interface IItemData {
-  name: string;
-  value: number;
-  color?: string;
-  onChange?: (value: number) => void;
 }
 
 export default class Model {
-  public items: Record<string, IItemModel> = {};
+  public items: Record<string, LineModel> = {};
 
   static readonly TOTAL: number = 100;
 
@@ -57,11 +50,5 @@ export default class Model {
 
   public hasNoItems(): boolean {
     return Object.keys(this.items).length === 0;
-  }
-
-  public makeSumEqualTotal(items: IItemData[], sum: number): void {
-    const deficit = Model.TOTAL - sum;
-    const lastIndex = items.length - 1;
-    items[lastIndex].value = (items[lastIndex].value || 0) + deficit;
   }
 }

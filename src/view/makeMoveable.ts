@@ -1,4 +1,4 @@
-import View, { IHandle, TItems } from './view';
+import View, { Handle, LineViewMap } from './view';
 
 type Platform = 'mobile' | 'desktop'
 
@@ -190,7 +190,7 @@ function processMovement(params: ProccessMovementParams): void {
 };
 
 
-function findHandleThatCanBeMoved(handle: HTMLElement, handles: IHandle[], items: TItems): HTMLElement {
+function findHandleThatCanBeMoved(handle: HTMLElement, handles: Handle[], items: LineViewMap): HTMLElement {
   const restHandles = handles.filter(candidate => {
     const isNotCurrentHandle = candidate.handle !== handle;
 
@@ -205,7 +205,7 @@ function findHandleThatCanBeMoved(handle: HTMLElement, handles: IHandle[], items
   return restHandles.length > 0 ? restHandles[0].handle : handle;
 }
 
-function findHandleThatCanBeMovedToRight(handle: HTMLElement, handles: IHandle[], items: TItems): HTMLElement {
+function findHandleThatCanBeMovedToRight(handle: HTMLElement, handles: Handle[], items: LineViewMap): HTMLElement {
     const handleData = handles.find(candidate => candidate.handle === handle);
 
     const nextLineName = handleData?.nextName && items[handleData.nextName].name;
@@ -217,7 +217,7 @@ function findHandleThatCanBeMovedToRight(handle: HTMLElement, handles: IHandle[]
     return restHandles.length > 0 ? restHandles[0].handle : handle;
   }
 
-function findHandleThatCanBeMovedToLeft(handle: HTMLElement, handles: IHandle[], items: TItems) {
+function findHandleThatCanBeMovedToLeft(handle: HTMLElement, handles: Handle[], items: LineViewMap) {
   const handleData = handles.find(candidate => candidate.handle === handle);
 
   const previousLineName = handleData?.previousName && items[handleData.previousName].name;

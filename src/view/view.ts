@@ -1,24 +1,25 @@
 import { MakeHandleMoveable } from './makeMoveable';
-import { OnChange } from '../';
 import './styles.scss';
 
-export interface IHandle {
+export interface Handle {
   handle: HTMLElement;
   previousName: string;
   nextName: string;
 }
 
-export interface IItemView {
+export interface LineView {
   name: string;
   line: HTMLElement;
   onChange: OnChange;
-  _next: null | IItemView;
-  _previous: null | IItemView;
+  _next: null | LineView;
+  _previous: null | LineView;
 }
 
-export type TItems = {
-  [name: string]: IItemView;
+export type LineViewMap = {
+  [name: string]: LineView;
 }
+
+export type OnChange = (ids: number, params?: { auto: boolean }) => void;
 
 
 export default class View {
@@ -35,8 +36,8 @@ export default class View {
   public sliderMovement: MakeHandleMoveable;
   public node: HTMLElement;
   public slider: HTMLElement;
-  public items: TItems;
-  public handles: IHandle[];
+  public items: LineViewMap;
+  public handles: Handle[];
 
   public removePreviousHandles(handle: HTMLElement): void {
     this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
@@ -82,7 +83,7 @@ export default class View {
     return namesPrev[0];
   }
 
-  public getHandleData(handle: HTMLElement): IHandle {
+  public getHandleData(handle: HTMLElement): Handle {
     const handleIndex = this.handles.findIndex(
       handleData => handleData.handle === handle
     );
@@ -104,7 +105,7 @@ export default class View {
     return (value * 100) / totalPercent;
   }
 
-  public findHandleDataByToLineName(name: string): null | IHandle {
+  public findHandleDataByToLineName(name: string): null | Handle {
     const handleIndex = this.handles.findIndex(handle => {
       return handle.nextName === name;
     });
@@ -112,7 +113,7 @@ export default class View {
     return handleIndex === -1 ? null : this.handles[handleIndex];
   }
 
-  public findHandleDataByFromLineName(name: string): null | IHandle {
+  public findHandleDataByFromLineName(name: string): null | Handle {
     const handleIndex = this.handles.findIndex(handle => {
       return handle.previousName === name;
     });

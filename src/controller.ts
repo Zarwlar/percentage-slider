@@ -1,23 +1,30 @@
-import Model, { IItemModel, IItemData } from './model';
-import View, { IHandle, IItemView } from './view/view';
+import Model, { LineModel } from './model';
+import View, { Handle, LineView } from './view/view';
 
-interface IItem {
+interface LineWithHandle {
   name: string;
   line: HTMLElement;
   handle: HTMLElement;
 }
 
-interface ISingleItem {
+interface SimpleLine {
   line: HTMLElement;
   name: string;
   value: number;
 }
 
+export interface LineInitParams {
+  name: string;
+  value: number;
+  color?: string;
+  onChange?: (value: number) => void;
+}
+
 type InternalOnChange = (ids: number, params: { auto: boolean }) => void;
 
-type CreateItemsOutput = [ISingleItem, ...Array<IItem>]
+type CreateItemsOutput = [SimpleLine, ...Array<LineWithHandle>]
 
-export type CreatedItemParams = Required<Omit<IItemData, 'onChange'>> & { onChange: InternalOnChange }
+export type CreatedItemParams = Required<Omit<LineInitParams, 'onChange'>> & { onChange: InternalOnChange }
 
 export default class Controller {
   private _model: Model;
@@ -29,14 +36,14 @@ export default class Controller {
     this.activateDragHandleListener();
   }
 
-  public createSingleItem(params: CreatedItemParams): ISingleItem {
+  public createSingleItem(params: CreatedItemParams): SimpleLine {
     const { name, value, onChange, color } = params;
     if (!name || name.trim() === '') {
       throw new Error('Name must be provided.');
     }
 
     const line = this._view.createLine(name, color);
-    const itemView: IItemView = {
+    const itemView: LineView = {
       name: name,
       line: line,
       onChange: onChange,
@@ -44,7 +51,7 @@ export default class Controller {
       _previous: null,
     };
 
-    const itemModel: IItemModel = {
+    const itemModel: LineModel = {
       name: name,
       value: value,
     };
@@ -63,7 +70,7 @@ export default class Controller {
     };
   }
 
-  public createItem(params: CreatedItemParams): IItem {
+  public createItem(params: CreatedItemParams): LineWithHandle {
     const { name, value, onChange, color } = params;
     const line = this._view.createLine(name, color);
     const namePrev = this._view.getLastItemName();
@@ -117,7 +124,7 @@ export default class Controller {
 
     }, this);
 
-    this._view.handles.forEach(function (this: Controller, handleData: IHandle) {
+    this._view.handles.forEach(function (this: Controller, handleData: Handle) {
       const item = {
         handle: handleData.handle,
         name: handleData.nextName,
@@ -128,7 +135,7 @@ export default class Controller {
 
   }
 
-  public addItemToSlider(value: number, item: IItem): void {
+  public addItemToSlider(value: number, item: LineWithHandle): void {
     const aggregation = Object.keys(this._model.items).reduce((acc, curr) => {
       return acc + this._model.items[curr].value;
     }, 0);
@@ -146,7 +153,7 @@ export default class Controller {
     var singleLine = items[0];
     this._view.appendItem(singleLine.line);
 
-    (items.slice(1) as IItem[]).forEach((item, index, arr) => {
+    (items.slice(1) as LineWithHandle[]).forEach((item, index, arr) => {
       const itemName = item.name;
       const value = this._model.items[itemName].value;
       const prevName = arr[index - 1]?.name || singleLine.name;
@@ -161,13 +168,13 @@ export default class Controller {
     });
   }
 
-  public addItemToSliderAuto(item: IItem): void {
+  public addItemToSliderAuto(item: LineWithHandle): void {
     this.divideSliderIntoEqualParts();
     this._view.appendItem(item.handle);
     this._view.appendItem(item.line);
   }
 
-  public addItemToSliderGreedy(item: IItem): void {
+  public addItemToSliderGreedy(item: LineWithHandle): void {
     const emptySpace = Model.TOTAL - this._model.getSumOfItems();
     this._model.items[item.name].value = emptySpace;
     this._view.setLineWidth(item.name, Model.TOTAL);
@@ -178,7 +185,7 @@ export default class Controller {
     this._view.items[item.name].onChange(emptySpace, { auto: true });
   }
 
-  public addItemToSliderBySplitLastItem(item: IItem): void {
+  public addItemToSliderBySplitLastItem(item: LineWithHandle): void {
     const prevItem = this._view.items[item.name]._previous;
     const prevItemValue = prevItem && this._model.items[prevItem.name].value || 0;
 
@@ -333,7 +340,7 @@ export default class Controller {
     onRemove();
   }
 
-  private updateHandlePosition(item: Omit<IItem, 'line'>) {
+  private updateHandlePosition(item: Omit<LineWithHandle, 'line'>) {
     const { handle } = item;
     const prevItem = this._view.items[item.name]._previous;
 
