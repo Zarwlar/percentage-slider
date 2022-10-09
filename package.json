@@ -8,6 +8,7 @@
     "live-test": "node_modules/.bin/parcel ./src/tests/live/index.html",
     "build-prod": "node_modules/.bin/parcel build -d ./build --no-source-maps ./src/tests/live/index.html --public-url ./",
     "build-package": "node_modules/.bin/parcel build -d ./package --no-content-hash --no-source-maps --out-file percentage-slider ./src/index.ts",
+    "prettier-format": "prettier --config .prettierrc.json 'src/**/*.ts' --write",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@parcel/transformer-sass": "^2.7.0",
     "parcel": "^2.7.0",
+    "prettier": "2.7.1",
     "sass": "^1.32.8",
     "tslib": "^1.10.0",
     "typescript": "^3.6.4"

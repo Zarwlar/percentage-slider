@@ -35,12 +35,10 @@ export default class Model {
   }
 
   public getSumOfLines(): number {
-    return Object
-      .keys(this.lines)
-      .reduce((acc, line) => {
-        const currValue = this.lines[line].value;
-        return isNaN(currValue) ? acc : acc + currValue;
-      }, 0);
+    return Object.keys(this.lines).reduce((acc, line) => {
+      const currValue = this.lines[line].value;
+      return isNaN(currValue) ? acc : acc + currValue;
+    }, 0);
   }
 
   public isValidValue(value?: number): boolean {

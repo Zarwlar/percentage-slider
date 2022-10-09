@@ -17,10 +17,9 @@ export interface LineView {
 
 export type LineViewMap = {
   [name: string]: LineView;
-}
+};
 
 export type OnChange = (ids: number, params?: { auto: boolean }) => void;
-
 
 export default class View {
   public constructor(node: HTMLElement) {
@@ -37,7 +36,7 @@ export default class View {
   public node: HTMLElement;
   public slider: HTMLElement;
   public lines: LineViewMap;
-  public handles: Map<HTMLElement, Handle>
+  public handles: Map<HTMLElement, Handle>;
 
   public removePreviousHandles(handle: HTMLElement): void {
     this.handles.delete(handle);
@@ -72,9 +71,10 @@ export default class View {
   }
 
   public getLastLineName(): string {
-    const namesPrev = Object
-      .keys(this.lines)
-      .filter(lineView => this.lines[lineView].nextLineView === null, this);
+    const namesPrev = Object.keys(this.lines).filter(
+      (lineView) => this.lines[lineView].nextLineView === null,
+      this
+    );
 
     if (namesPrev.length !== 1) {
       throw new Error('Error during try to find last line name');
@@ -104,18 +104,24 @@ export default class View {
   }
 
   public findHandleDataByToLineName(name: string): null | Handle {
-    const r = Array.from(this.handles.values()).find(c => c.nextLineName === name);
+    const r = Array.from(this.handles.values()).find(
+      (c) => c.nextLineName === name
+    );
 
     return r ? r : null;
   }
 
   public findHandleDataByFromLineName(name: string): null | Handle {
-    const r = Array.from(this.handles.values()).find(c => c.previousLineName === name);
+    const r = Array.from(this.handles.values()).find(
+      (c) => c.previousLineName === name
+    );
 
     return r ? r : null;
   }
 
-  public makeHandleMoveable(updateValues: (handle: HTMLElement, a: number, b: number) => void): void {
+  public makeHandleMoveable(
+    updateValues: (handle: HTMLElement, a: number, b: number) => void
+  ): void {
     this.sliderMovement.makeHandleMoveable(updateValues);
   }
 
@@ -139,7 +145,9 @@ export default class View {
   }
 
   public static removeElement(el: HTMLElement): void {
-    if (!el.parentNode) { return; }
+    if (!el.parentNode) {
+      return;
+    }
 
     el.parentNode.removeChild(el);
   }
