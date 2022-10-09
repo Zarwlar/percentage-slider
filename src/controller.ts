@@ -92,7 +92,7 @@ export default class Controller {
     this._view.lines[namePrev]._next = this._view.lines[name];
 
     const handle = this._view.createHandle();
-    this._view.handles.push({
+    this._view.handles.set(handle, {
       handle: handle,
       previousName: namePrev,
       nextName: name,
@@ -249,7 +249,7 @@ export default class Controller {
     if (isSingleLine) {
       this._model.lines = {};
       this._view.lines = {};
-      this._view.handles = [];
+      this._view.handles = new Map();
 
       View.removeElement(removingLineView.line);
 

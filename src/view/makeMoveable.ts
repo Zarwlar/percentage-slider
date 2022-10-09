@@ -51,7 +51,7 @@ export class MakeHandleMoveable {
 
       let handle = event.target;
 
-      const handleData = this.view.handles.find(candidate => candidate.handle === handle);
+      const handleData = this.view.getHandleData(handle);
 
       const prevLineValue = handleData?.previousName && this.view.lines[handleData?.previousName].line.dataset.value;
       const nextLineValue = handleData?.nextName && this.view.lines[handleData?.nextName].line.dataset.value;
@@ -191,47 +191,47 @@ function processMovement(params: ProccessMovementParams): void {
 
 interface ParamsToFindNewHandle {
   handle: HTMLElement,
-  handles: Handle[],
+  handles: Map<HTMLElement, Handle>
   lines: LineViewMap
 }
 
 function findHandleThatCanBeMoved({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
-  const restHandles = handles.filter(candidate => {
-    const isNotCurrentHandle = candidate.handle !== handle;
+  const restHandles = Array.from(handles.entries()).filter(([iteratedHandle, { previousName, nextName }]) => {
+    const isNotCurrentHandle = iteratedHandle !== handle;
 
-    const prevVal = lines[candidate.previousName].line.dataset.value;
-    const nextVal = lines[candidate.nextName].line.dataset.value;
+    const prevVal = lines[previousName].line.dataset.value;
+    const nextVal = lines[nextName].line.dataset.value;
 
     const hasNonZeroLine = prevVal !== '0' || nextVal !== '0';
 
     return isNotCurrentHandle && hasNonZeroLine;
   });
 
-  return restHandles.length > 0 ? restHandles[0].handle : handle;
+  return restHandles.length > 0 ? restHandles[0][0] : handle;
 }
 
 function findHandleThatCanBeMovedToRight({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
-    const handleData = handles.find(candidate => candidate.handle === handle);
+    const handleData = handles.get(handle);
 
     const nextLineName = handleData?.nextName && lines[handleData.nextName].name;
 
-    const restHandles = handles.filter(candidate => {
-      return lines[candidate.nextName]._previous?.name === nextLineName;
+    const restHandles = Array.from(handles.entries()).filter(([_, { nextName }]) => {
+      return lines[nextName]._previous?.name === nextLineName;
     });
 
-    return restHandles.length > 0 ? restHandles[0].handle : handle;
+    return restHandles.length > 0 ? restHandles[0][0] : handle;
   }
 
-function findHandleThatCanBeMovedToLeft({ handle, handles, lines }: ParamsToFindNewHandle) {
-  const handleData = handles.find(candidate => candidate.handle === handle);
+function findHandleThatCanBeMovedToLeft({ handle, handles, lines }: ParamsToFindNewHandle): HTMLElement {
+  const handleData = handles.get(handle);
 
   const previousLineName = handleData?.previousName && lines[handleData.previousName].name;
 
-  const restHandles = handles.filter(candidate => {
-    return lines[candidate.previousName]._next?.name === previousLineName;
+  const restHandles = Array.from(handles.entries()).filter(([_, { previousName }]) => {
+    return lines[previousName]._next?.name === previousLineName;
   });
 
-  return restHandles.length > 0 ? restHandles[0].handle : handle;
+  return restHandles.length > 0 ? restHandles[0][0] : handle;
 }
 
 export default MakeHandleMoveable;

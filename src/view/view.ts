@@ -27,7 +27,7 @@ export default class View {
     this.node = node;
     this.slider = this.createSlider();
     this.lines = {};
-    this.handles = [];
+    this.handles = new Map();
     this.sliderMovement = new MakeHandleMoveable(this);
 
     this.node.appendChild(this.slider);
@@ -37,10 +37,10 @@ export default class View {
   public node: HTMLElement;
   public slider: HTMLElement;
   public lines: LineViewMap;
-  public handles: Handle[];
+  public handles: Map<HTMLElement, Handle>
 
   public removePreviousHandles(handle: HTMLElement): void {
-    this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
+    this.handles.delete(handle);
   }
 
   public createLine(name: string, color: string): HTMLElement {
@@ -84,15 +84,13 @@ export default class View {
   }
 
   public getHandleData(handle: HTMLElement): Handle {
-    const handleIndex = this.handles.findIndex(
-      handleData => handleData.handle === handle
-    );
+    const handleData = this.handles.get(handle);
 
-    if (handleIndex === -1) {
+    if (!handleData) {
       throw new Error('Error when trying to find handle');
     }
 
-    return this.handles[handleIndex];
+    return handleData;
   }
 
   public getPercentOf(name: string): number {
@@ -106,19 +104,15 @@ export default class View {
   }
 
   public findHandleDataByToLineName(name: string): null | Handle {
-    const handleIndex = this.handles.findIndex(handle => {
-      return handle.nextName === name;
-    });
+    const r = Array.from(this.handles.values()).find(candidate => candidate.nextName === name);
 
-    return handleIndex === -1 ? null : this.handles[handleIndex];
+    return r ? r : null;
   }
 
   public findHandleDataByFromLineName(name: string): null | Handle {
-    const handleIndex = this.handles.findIndex(handle => {
-      return handle.previousName === name;
-    });
+    const r = Array.from(this.handles.values()).find(candidate => candidate.previousName === name);
 
-    return handleIndex === -1 ? null : this.handles[handleIndex];
+    return r ? r : null;
   }
 
   public makeHandleMoveable(updateValues: (handle: HTMLElement, a: number, b: number) => void): void {
