@@ -178,7 +178,7 @@ export default class PercentageSlider {
 
 declare global {
   interface Window {
-    PercentageSlider: typeof PercentageSlider;
+    PercentageSlider: ThisType<PercentageSlider>;
   }
 }
 
