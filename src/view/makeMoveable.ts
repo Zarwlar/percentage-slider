@@ -1,243 +1,295 @@
-import View from './view';
+import View, { Handle, LineViewMap } from './view';
 
-export interface IMakeHandleMovable {
-  makeHandleMoveable: (handle: HTMLElement, updateValues: (a: number, b: number) => void) => void;
+type Platform = 'mobile' | 'desktop';
+
+interface PlatformDependetData<E extends Platform> {
+  eventName: E extends 'mobile' ? 'ontouchstart' : 'onmousedown';
+  getClientX: (event: E extends 'mobile' ? TouchEvent : MouseEvent) => number;
+  move: {
+    start: E extends 'mobile' ? 'touchmove' : 'mousemove';
+    finish: E extends 'mobile' ? 'touchend' : 'mouseup';
+  };
+}
+
+interface Env {
+  mobile: PlatformDependetData<'mobile'>;
+  desktop: PlatformDependetData<'desktop'>;
+}
+
+const environment: Env = {
+  mobile: {
+    eventName: 'ontouchstart',
+    getClientX: (event) => event.touches[0].clientX,
+    move: { start: 'touchmove', finish: 'touchend' },
+  },
+  desktop: {
+    eventName: 'onmousedown',
+    getClientX: (event) => event.clientX,
+    move: { start: 'mousemove', finish: 'mouseup' },
+  },
+};
+
+export class MakeHandleMoveable {
+  constructor(view: View) {
+    const platform: Platform =
+      typeof window.orientation !== 'undefined' ? 'mobile' : 'desktop';
+
+    this.enviroment = environment[platform];
+    this.view = view;
+  }
+
+  public makeHandleMoveable(
+    updateValues: (handle: HTMLElement, a: number, b: number) => void
+  ): void {
+    this.view.slider[this.enviroment.eventName] = (event) => {
+      const isHtmlElement = event.target instanceof HTMLElement;
+      const isHandle =
+        isHtmlElement &&
+        (event.target.closest('[data-handle]') as HTMLElement | undefined)
+          ?.dataset?.handle === 'handle';
+
+      if (!isHandle) {
+        return;
+      }
+
+      let handle = event.target;
+
+      const handleData = this.view.getHandleData(handle);
+
+      const prevLineValue =
+        handleData?.previousLineName &&
+        this.view.lines[handleData?.previousLineName].line.dataset.value;
+      const nextLineValue =
+        handleData?.nextLineName &&
+        this.view.lines[handleData?.nextLineName].line.dataset.value;
+
+      if (prevLineValue === undefined || nextLineValue === undefined) {
+        console.error(
+          'Trying to move a handle that is not bounded by two lines.'
+        );
+        return;
+      }
+
+      const isHandleLocked = prevLineValue === '0' && nextLineValue === '0';
+
+      const params: Omit<ProccessMovementParams, 'handle'> = {
+        event,
+        updateValues,
+        view: this.view,
+        enviroment: this.enviroment,
+      };
+
+      if (isHandleLocked) {
+        handle = findHandleThatCanBeMoved({
+          handle: handle,
+          handles: this.view.handles,
+          lines: this.view.lines,
+        });
+        processMovement({ ...params, handle });
+      } else {
+        processMovement({ ...params, handle });
+      }
+    };
+  }
+
+  private view: View;
+
+  private enviroment: Env[keyof Env];
+}
+
+interface ProccessMovementParams {
+  event: TouchEvent | MouseEvent;
+  handle: HTMLElement;
   view: View;
+  enviroment: Env[keyof Env];
+  updateValues: (handle: HTMLElement, a: number, b: number) => void;
 }
 
-export class MakeHandleMoveableMobile implements IMakeHandleMovable {
+function processMovement(params: ProccessMovementParams): void {
+  const { event, view, enviroment, updateValues } = params;
 
-  public view: View;
+  let handle = params.handle;
 
-  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
-
-    if (!this.view) {
-      console.warn('View field is not initialized');
-      return;
-    }
-
-    handle.ontouchstart = (event) => {
-
-      if (event.cancelable) {
-        event.preventDefault();
-      }
-
-      const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
-      const longestLineWidth = parseFloat(sliderWidthStr || '');
-      const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
-
-      const isPartialFilledSlider = longestLinePercent !== 100;
-      const shiftX = event.touches[0].clientX - handle.getBoundingClientRect().left;
-
-      const onTouchMove = (event: TouchEvent) => {
-        let newLeft = event.touches[0].clientX - shiftX - this.view.slider.getBoundingClientRect().left;
-
-        const considerLeftEdgeCase = () => {
-          const nameFrom = this.view.getHandleData(handle).nameFrom;
-          const prevHandleData = this.view.findHandleDataByToLineName(nameFrom);
-          const isFirstHandle = prevHandleData === null;
-
-          if (!isFirstHandle) {
-            const prevHandle = prevHandleData && prevHandleData.handle;
-            const prevHandleLeft = prevHandle && parseFloat(getComputedStyle(prevHandle).left || '0') || 0;
-
-            if (newLeft < prevHandleLeft) {
-              newLeft = prevHandleLeft;
-              return;
-            }
-          }
-
-          if (newLeft < 0) {
-            newLeft = 0;
-          }
-        }
-
-        const considerRightEdgeCase = () => {
-          let rightEdgeSource = this.view.slider.offsetWidth;
-          let offset = this.view.slider.getBoundingClientRect().left;
-          newLeft += offset;
-
-          if (isPartialFilledSlider) {
-            const longestLine = this.view.slider.firstChild;
-            rightEdgeSource = longestLine && (longestLine as HTMLElement).offsetWidth || rightEdgeSource;
-            offset = longestLine && (longestLine as HTMLElement).getBoundingClientRect().left || offset;
-          }
-
-          const nameTo = this.view.getHandleData(handle).nameTo;
-          const nextHandleData = this.view.findHandleDataByFromLineName(nameTo);
-          const isLastLine = nextHandleData === null;
-
-          if (!isLastLine && nextHandleData) {
-            const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0');
-
-            if (newLeft > nextHandleLeft + offset) {
-              newLeft = nextHandleLeft;
-              return;
-            }
-          }
-
-          newLeft -= offset;
-
-          const rightEdge = rightEdgeSource;
-          if (newLeft > rightEdge) {
-            newLeft = rightEdge;
-          }
-        }
-
-        considerLeftEdgeCase();
-        considerRightEdgeCase();
-
-        const curLeft = parseFloat(getComputedStyle(handle).left || '0');
-        const newLeftInPercent = Math.round(this.view.convertToPercent(newLeft));
-        const oldLeftInPercent = Math.round(this.view.convertToPercent(curLeft));
-
-        handle.style.left = `${newLeftInPercent}%`;
-        handle.style.zIndex = '1';
-
-        if (newLeftInPercent === 0) {
-          this.view.calculateZIndexForExtraLeftCase(handle);
-        }
-
-        updateValues(oldLeftInPercent, newLeftInPercent);
-
-      }
-
-      const onTouchEnd = () => {
-        document.removeEventListener('touchend', onTouchEnd);
-        document.removeEventListener('touchmove', onTouchMove);
-      }
-
-      document.addEventListener('touchmove', onTouchMove);
-      document.addEventListener('touchend', onTouchEnd);
-    };
-
-    handle.ondragstart = function () {
-      return false;
-    };
+  if (event.cancelable) {
+    event.preventDefault();
   }
+
+  const sliderWidthStr = view.slider.firstChild
+    ? getComputedStyle(view.slider.firstChild as Element).width
+    : '0';
+  const longestLineWidth = parseFloat(sliderWidthStr || '');
+  const longestLinePercent = Math.round(
+    view.convertToPercent(longestLineWidth)
+  );
+
+  const isPartialFilledSlider = longestLinePercent !== 100;
+  const shiftX =
+    enviroment.getClientX(event as TouchEvent & MouseEvent) -
+    handle.getBoundingClientRect().left;
+
+  const onMove = (event: TouchEvent | MouseEvent) => {
+    let newLeft =
+      enviroment.getClientX(event as TouchEvent & MouseEvent) -
+      shiftX -
+      view.slider.getBoundingClientRect().left;
+
+    const considerLeftEdgeCase = () => {
+      const previousName = view.getHandleData(handle).previousLineName;
+      const prevHandleData = view.findHandleDataByToLineName(previousName);
+      const isFirstHandle = prevHandleData === null;
+
+      if (!isFirstHandle) {
+        const prevHandle = prevHandleData && prevHandleData.handle;
+        const prevHandleLeft =
+          (prevHandle &&
+            parseFloat(getComputedStyle(prevHandle).left || '0')) ||
+          0;
+
+        if (newLeft < prevHandleLeft) {
+          newLeft = prevHandleLeft;
+          handle = findHandleThatCanBeMovedToLeft({
+            handle: handle,
+            handles: view.handles,
+            lines: view.lines,
+          });
+          return;
+        }
+      }
+
+      if (newLeft < 0) {
+        newLeft = 0;
+      }
+    };
+
+    const considerRightEdgeCase = () => {
+      let rightEdgeSource = view.slider.offsetWidth;
+      let offset = view.slider.getBoundingClientRect().left;
+      newLeft += offset;
+
+      if (isPartialFilledSlider) {
+        const longestLine = view.slider.firstChild;
+        rightEdgeSource =
+          (longestLine && (longestLine as HTMLElement).offsetWidth) ||
+          rightEdgeSource;
+        offset =
+          (longestLine &&
+            (longestLine as HTMLElement).getBoundingClientRect().left) ||
+          offset;
+      }
+
+      const nextName = view.getHandleData(handle).nextLineName;
+      const nextHandleData = view.findHandleDataByFromLineName(nextName);
+      const isLastLine = nextHandleData === null;
+
+      if (!isLastLine && nextHandleData) {
+        const nextHandle = nextHandleData.handle;
+        const nextHandleLeft = parseFloat(
+          getComputedStyle(nextHandle).left || '0'
+        );
+
+        if (newLeft > nextHandleLeft + offset) {
+          newLeft = nextHandleLeft;
+          handle = findHandleThatCanBeMovedToRight({
+            handle: handle,
+            handles: view.handles,
+            lines: view.lines,
+          });
+          return;
+        }
+      }
+
+      newLeft -= offset;
+
+      const rightEdge = rightEdgeSource;
+      if (newLeft > rightEdge) {
+        newLeft = rightEdge;
+      }
+    };
+
+    considerLeftEdgeCase();
+    considerRightEdgeCase();
+
+    const currentLeft = parseFloat(getComputedStyle(handle).left || '0');
+    const newLeftInPercent = Math.round(view.convertToPercent(newLeft));
+    const oldLeftInPercent = Math.round(view.convertToPercent(currentLeft));
+
+    handle.style.left = `${newLeftInPercent}%`;
+
+    updateValues(handle, oldLeftInPercent, newLeftInPercent);
+  };
+
+  const onMoveEnd = () => {
+    document.removeEventListener(enviroment.move.finish, onMoveEnd);
+    document.removeEventListener(enviroment.move.start, onMove);
+  };
+
+  document.addEventListener(enviroment.move.start, onMove);
+  document.addEventListener(enviroment.move.finish, onMoveEnd);
 }
 
-export class MakeHandleMoveableDesktop implements IMakeHandleMovable {
+interface ParamsToFindNewHandle {
+  handle: HTMLElement;
+  handles: Map<HTMLElement, Handle>;
+  lines: LineViewMap;
+}
 
-  public view: View;
+function findHandleThatCanBeMoved({
+  handle,
+  handles,
+  lines,
+}: ParamsToFindNewHandle): HTMLElement {
+  const restHandles = Array.from(handles.entries()).filter(
+    ([iteratedHandle, { previousLineName, nextLineName }]) => {
+      const isNotCurrentHandle = iteratedHandle !== handle;
 
-  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
+      const prevVal = lines[previousLineName].line.dataset.value;
+      const nextVal = lines[nextLineName].line.dataset.value;
 
-    if (!this.view) {
-      console.warn('View field is not initialized');
-      return;
+      const hasNonZeroLine = prevVal !== '0' || nextVal !== '0';
+
+      return isNotCurrentHandle && hasNonZeroLine;
     }
+  );
 
-    handle.onmousedown = (event) => {
-
-      event.preventDefault();
-
-      const sliderWidthStr = this.view.slider.firstChild ? getComputedStyle(this.view.slider.firstChild as Element).width : '0';
-      const longestLineWidth = parseFloat(sliderWidthStr || '');
-      const longestLinePercent = Math.round(this.view.convertToPercent(longestLineWidth));
-
-      const isPartialFilledSlider = longestLinePercent !== 100;
-      const shiftX = event.clientX - handle.getBoundingClientRect().left;
-
-      const onMouseMove = (event: MouseEvent) => {
-        let newLeft = event.clientX - shiftX - this.view.slider.getBoundingClientRect().left;
-
-        const considerLeftEdgeCase = () => {
-          const nameFrom = this.view.getHandleData(handle).nameFrom;
-          const prevHandleData = this.view.findHandleDataByToLineName(nameFrom);
-          const isFirstHandle = prevHandleData === null;
-
-          if (!isFirstHandle) {
-            const prevHandle = prevHandleData && prevHandleData.handle;
-            const prevHandleLeft = prevHandle && parseFloat(getComputedStyle(prevHandle).left || '0') || 0;
-
-            if (newLeft < prevHandleLeft) {
-              newLeft = prevHandleLeft;
-              return;
-            }
-          }
-
-          if (newLeft < 0) {
-            newLeft = 0;
-          }
-        }
-
-        const considerRightEdgeCase = () => {
-          let rightEdgeSource = this.view.slider.offsetWidth;
-          let offset = this.view.slider.getBoundingClientRect().left;
-          newLeft += offset;
-
-          if (isPartialFilledSlider) {
-            const longestLine = this.view.slider.firstChild;
-            rightEdgeSource = longestLine && (longestLine as HTMLElement).offsetWidth || rightEdgeSource;
-            offset = longestLine && (longestLine as HTMLElement).getBoundingClientRect().left || offset;
-          }
-
-          const nameTo = this.view.getHandleData(handle).nameTo;
-          const nextHandleData = this.view.findHandleDataByFromLineName(nameTo);
-          const isLastLine = nextHandleData === null;
-
-          if (!isLastLine && nextHandleData) {
-            const nextHandle = nextHandleData.handle;
-            const nextHandleLeft = parseFloat(getComputedStyle(nextHandle).left || '0');
-
-            if (newLeft > nextHandleLeft + offset) {
-              newLeft = nextHandleLeft;
-              return;
-            }
-          }
-
-          newLeft -= offset;
-
-          const rightEdge = rightEdgeSource;
-          if (newLeft > rightEdge) {
-            newLeft = rightEdge;
-          }
-        }
-
-        considerLeftEdgeCase();
-        considerRightEdgeCase();
-
-        const curLeft = parseFloat(getComputedStyle(handle).left || '0');
-        const newLeftInPercent = Math.round(this.view.convertToPercent(newLeft));
-        const oldLeftInPercent = Math.round(this.view.convertToPercent(curLeft));
-
-        handle.style.left = `${newLeftInPercent}%`;
-        handle.style.zIndex = '1';
-
-        if (newLeftInPercent === 0) {
-          this.view.calculateZIndexForExtraLeftCase(handle);
-        }
-
-        updateValues(oldLeftInPercent, newLeftInPercent);
-
-      }
-
-      const onMouseUp = () => {
-        document.removeEventListener('mouseup', onMouseUp);
-        document.removeEventListener('mousemove', onMouseMove);
-      }
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    handle.ondragstart = function () {
-      return false;
-    };
-  }
+  return restHandles.length > 0 ? restHandles[0][0] : handle;
 }
 
-export type TMakeHandleMoveable =
-  typeof MakeHandleMoveableDesktop |
-  typeof MakeHandleMoveableMobile;
+function findHandleThatCanBeMovedToRight({
+  handle,
+  handles,
+  lines,
+}: ParamsToFindNewHandle): HTMLElement {
+  const handleData = handles.get(handle);
 
-function getMakeHandleMoveableCls(): TMakeHandleMoveable {
-  const isMobileDevice = typeof window.orientation !== 'undefined';
-  return isMobileDevice ? MakeHandleMoveableMobile : MakeHandleMoveableDesktop;
+  const candidateLineName =
+    handleData?.nextLineName && lines[handleData.nextLineName].name;
+
+  const restHandles = Array.from(handles.entries()).filter(
+    ([_, { nextLineName }]) => {
+      return lines[nextLineName].previousLineView?.name === candidateLineName;
+    }
+  );
+
+  return restHandles.length > 0 ? restHandles[0][0] : handle;
 }
 
-const MakeMoveable = getMakeHandleMoveableCls();
+function findHandleThatCanBeMovedToLeft({
+  handle,
+  handles,
+  lines,
+}: ParamsToFindNewHandle): HTMLElement {
+  const handleData = handles.get(handle);
 
-export default MakeMoveable;
+  const candidateLineName =
+    handleData?.previousLineName && lines[handleData.previousLineName].name;
+
+  const restHandles = Array.from(handles.entries()).filter(
+    ([_, { previousLineName }]) => {
+      return lines[previousLineName].nextLineView?.name === candidateLineName;
+    }
+  );
+
+  return restHandles.length > 0 ? restHandles[0][0] : handle;
+}
+
+export default MakeHandleMoveable;

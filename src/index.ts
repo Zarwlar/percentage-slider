@@ -1,159 +1,185 @@
-import './polyfills/Array';
-import './polyfills/DOM';
+import Model from './model';
+import Controller, {
+  InternalLineInitParams,
+  LineInitParams,
+} from './controller';
+import View from './view/view';
 
-import Model, { IItemData } from './model';
-import Controller from './controller';
-import View from './View/view';
-import MakeMoveable, { IMakeHandleMovable } from './View/makeMoveable';
+export type SuccessResult<T> = { success: true; payload?: T };
 
-interface IAddItemsOptions {
-  force?: boolean;
-}
-
-export type TOnChange = (ids: number, params?: { auto: boolean }) => void;
-
-export type SuccessResult<T> =
-  { success: true,
-    payload?: T
-  }
-
-export type ErrorResult =
-  { success: false;
-    error: string;
-  }
+export type ErrorResult = { success: false; error: string };
 
 export type Result<T> = SuccessResult<T> | ErrorResult;
 
 export default class PercentageSlider {
-  private _model: Model;
-  private _view: View;
-  private _controller: Controller;
-  private _makeMoveable: IMakeHandleMovable;
-  private _wasChanged = false;
-
   public constructor(node: HTMLElement | null) {
     if (!node) {
       console.warn('Node is empty!');
       return;
     }
 
-    this._model = new Model();
-    this._makeMoveable = new MakeMoveable();
-    this._view = new View(node, this._makeMoveable);
-    this._makeMoveable.view = this._view;
-    this._controller = new Controller(this._model, this._view);
+    this.model = new Model();
+    this.view = new View(node);
+    this.controller = new Controller(this.model, this.view);
   }
 
-  public mkOnChange(onChange?: (value: number) => void): () => void {
-    return ((value: number, options: { auto: boolean }) => {
-      var auto = options && options.auto;
-      var isNumber = typeof value === 'number' && !isNaN(value);
-
-      this._wasChanged = auto ? this._wasChanged : true;
-
-      onChange && isNumber && onChange(value);
-    }).bind(this);
-  }
-
-  public mkOnRemove(onRemove?: () => void): () => void {
-    return (function () {
-      onRemove && onRemove();
-    }).bind(this);
-  }
-
-  public addItem(itemData: IItemData): Result<void> {
-    const { value, onChange, name, color } = itemData;
-
-    if (!this._model.isValidValue(value)) {
-      return { success: false, error: 'Total can\'t be greater than ' + this._model.total};
+  public addLine({
+    value,
+    onChange,
+    name,
+    color,
+  }: LineInitParams): Result<void> {
+    if (!this.model.isValidValue(value)) {
+      return {
+        success: false,
+        error: "Total can't be greater than " + Model.TOTAL + '.',
+      };
     }
 
-    const hasNameAlreadyTaken = this._model.items[name];
+    const hasNameAlreadyTaken = this.model.lines[name];
+
+    if (!name || name.trim().length === 0) {
+      return { success: false, error: `The name can't be empty.` };
+    }
 
     if (hasNameAlreadyTaken) {
-      return { success: false, error: `Name '${name}' has already taken`};
+      return { success: false, error: `The name '${name}' is already in use.` };
     }
 
-    if (this._model.hasNoItems()) {
-      const validValue = parseInt(`${value}`, 10) || this._model.total;
-      const item = this._controller.createSingleItem(name, validValue, this.mkOnChange(onChange), color || View.getRandomColor());
-      this._view.appendItem(item.line);
+    if (this.model.hasNoLines()) {
+      try {
+        const validValue = parseInt(`${value}`, 10) || Model.TOTAL;
+        const lineParams = {
+          name: name,
+          value: validValue,
+          onChange: this.mkOnChange(onChange),
+          color: color || View.getRandomColor(),
+        };
 
-      if (value && !isNaN(value)) {
-        this._wasChanged = true;
+        const lineData = this.controller.createSingleLine(lineParams);
+
+        this.view.appendElement(lineData.line);
+
+        if (value && !isNaN(value)) {
+          this._wasChanged = true;
+        }
+        return { success: true };
+      } catch (e) {
+        return { success: false, error: e };
       }
-      return { success: true };
     }
 
-    const item = this._controller.createItem(name, (value || 0), this.mkOnChange(onChange), color || View.getRandomColor());
+    const lineParams = {
+      name,
+      value: value || 0,
+      onChange: this.mkOnChange(onChange),
+      color: color || View.getRandomColor(),
+    };
+
+    const lwh = this.controller.createLineWithHandle(lineParams);
 
     if (value && !isNaN(value)) {
       this._wasChanged = true;
-      this._controller.addItemToSlider(value, item);
+      this.controller.addLineWithHandleToSlider(value, lwh);
       return { success: true };
     }
 
     if (this._wasChanged) {
-      const noSpaceLeft = this._model.getSumOfItems() === this._model.total;
+      const noSpaceLeft = this.model.getSumOfLines() === Model.TOTAL;
       if (noSpaceLeft) {
-        this._controller.addItemToSliderBySplitLastItem(item);
+        this.controller.addLineWithHandleToSliderBySplitLastLine(lwh);
       } else {
-        this._controller.addItemToSliderGreedy(item);
+        this.controller.addLineWithHandleToSliderGreedy(lwh);
       }
 
       return { success: true };
     }
 
-    this._controller.addItemToSliderAuto(item);
+    this.controller.addLineWithHandleToSliderAuto(lwh);
 
     return { success: true };
   }
 
-  public addItems(itemsData: IItemData[], options?: IAddItemsOptions): Result<void> {
+  public addLines(lines: LineInitParams[]): Result<void> {
+    const someLinesAlreadyAdded = Object.keys(this.model.lines).length !== 0;
 
-    const force = options && options.force;
-
-    const someItemsAlreadyAdded = Object.keys(this._model.items).length !== 0;
-
-    if (someItemsAlreadyAdded) {
-      return { success: false,
-               error: 'Items can not be added to already initialized slider'
-             };
-    }
-
-    const itemsDataSum = itemsData.reduce((acc, curr) => acc + (curr.value || 0), 0);
-
-    if (itemsDataSum > this._model.total) {
-      return { success: false,
-               error: `Sum of items can not be great than ${this._model.total}`
-             };
-    }
-
-    if (itemsData.length === 0) {
-      return { success: false, error: 'Items length can not be equal 0' };
-    }
-
-    let convertedItems = itemsData.map((itemData: IItemData) => {
+    if (someLinesAlreadyAdded) {
       return {
-        ...itemData,
-        onChange: this.mkOnChange(itemData.onChange),
+        success: false,
+        error:
+          'Lines can not be added to already initialized slider. Instead, you can add lines one at a time.',
       };
-    });
-
-    if (force && itemsDataSum !== this._model.total) {
-      this._model.makeSumEqualTotal(convertedItems, itemsDataSum);
     }
 
-    var items = this._controller.createItems(convertedItems);
+    const linesDataSum = lines.reduce(
+      (acc, curr) => acc + (curr.value || 0),
+      0
+    );
 
-    this._controller.addItemsToSlider(items);
+    if (linesDataSum > Model.TOTAL) {
+      return {
+        success: false,
+        error: `Sum of lines can not be greater than ${Model.TOTAL}.`,
+      };
+    }
+
+    if (lines.length === 0) {
+      return {
+        success: false,
+        error: 'Cannot initialize strips with an empty array.',
+      };
+    }
+
+    let internalLineInitParams: Array<InternalLineInitParams> = lines.map(
+      (line: LineInitParams) => {
+        return {
+          ...line,
+          color: line.color || View.getRandomColor(),
+          value: line.value || 0,
+          onChange: this.mkOnChange(line.onChange),
+        };
+      }
+    );
+
+    var internalLines = this.controller.createLines(internalLineInitParams);
+
+    this.controller.addLinesToSlider(internalLines);
 
     return { success: true };
   }
 
-  public removeItem(name: string, onRemove?: () => void): void {
-    this._controller.removeItem(name, this.mkOnRemove(onRemove));
+  public removeLine(name: string, onRemove?: () => void): void {
+    this.controller.removeLine(name, this.mkOnRemove(onRemove));
+  }
+
+  private model: Model;
+  private view: View;
+  private controller: Controller;
+  private _wasChanged = false;
+
+  private mkOnChange(
+    onChange?: (value: number) => void
+  ): (value: number, options: { auto: boolean }) => void {
+    return ((value: number, options: { auto: boolean }) => {
+      var auto = options && options.auto;
+
+      this._wasChanged = auto ? this._wasChanged : true;
+
+      onChange && onChange(value);
+    }).bind(this);
+  }
+
+  private mkOnRemove(onRemove?: () => void): () => void {
+    return function () {
+      onRemove && onRemove();
+    }.bind(this);
   }
 }
 
-(window as any).PercentageSlider = PercentageSlider;
+declare global {
+  interface Window {
+    PercentageSlider: ThisType<PercentageSlider>;
+  }
+}
+
+window.PercentageSlider = PercentageSlider;

@@ -1,54 +1,63 @@
-import Model, { IItemModel, IItemData } from './model';
-import View, { IItemView } from './View/view';
+import Model, { LineModel } from './model';
+import View, { Handle, LineView } from './view/view';
 
-interface IItem {
+interface LineWithHandle {
   name: string;
   line: HTMLElement;
   handle: HTMLElement;
 }
 
-interface ISingleItem {
+interface SimpleLine {
   line: HTMLElement;
   name: string;
   value: number;
 }
 
-type TOnChange = (ids: number, params: { auto: boolean }) => void;
+export interface LineInitParams {
+  name: string;
+  value: number;
+  color: string;
+  onChange: (value: number) => void;
+}
+
+type InternalOnChange = (ids: number, params: { auto: boolean }) => void;
+
+type Lines = [SimpleLine, ...Array<LineWithHandle>];
+
+export type InternalLineInitParams = Required<
+  Omit<LineInitParams, 'onChange'>
+> & { onChange: InternalOnChange };
 
 export default class Controller {
-  private _model: Model;
-  private _view: View;
-
-  public constructor(model: Model, view: View) {
-    this._model = model;
-    this._view = view;
+  public constructor(private model: Model, private view: View) {
+    this.model = model;
+    this.view = view;
+    this.activateDragHandleListener();
   }
 
-  public createSingleItem(name: string, value: number, onChange: TOnChange, color: string): ISingleItem {
-    if (!name || name.trim() === '') {
-      throw new Error('Name must be provided!');
-    }
+  public createSingleLine(params: InternalLineInitParams): SimpleLine {
+    const { name, value, onChange, color } = params;
 
-    const line = this._view.createLine(name, color);
-    const itemView: IItemView = {
+    const line = this.view.createLine(name, color);
+    const lineView: LineView = {
       name: name,
       line: line,
       onChange: onChange,
-      _next: null,
-      _previous: null,
+      nextLineView: null,
+      previousLineView: null,
     };
 
-    const itemModel: IItemModel = {
+    const lineModel: LineModel = {
       name: name,
       value: value,
     };
 
-    this._view.items[name] = itemView;
-    this._view.setLineWidth(name, value);
+    this.view.lines[name] = lineView;
+    this.view.setLineWidth(name, value);
 
-    this._model.items[name] = itemModel;
+    this.model.lines[name] = lineModel;
 
-    onChange(value, { auto: value === this._model.total });
+    onChange(value, { auto: value === Model.TOTAL });
 
     return {
       line,
@@ -57,249 +66,228 @@ export default class Controller {
     };
   }
 
-  public createItem(name: string, value: number, onChange: TOnChange, color: string): IItem {
-    const line = this._view.createLine(name, color);
-    const namePrev = this._view.getLastItemName();
+  public createLineWithHandle(params: InternalLineInitParams): LineWithHandle {
+    const { name, value, onChange, color } = params;
+    const line = this.view.createLine(name, color);
+    const namePrev = this.view.getLastLineName();
 
-    this._model.items[name] = {
+    this.model.lines[name] = {
       name: name,
       value: value,
     };
 
-    this._view.items[name] = {
+    this.view.lines[name] = {
       name: name,
       line: line,
       onChange: onChange,
-      _previous: this._view.items[namePrev],
-      _next: null,
+      previousLineView: this.view.lines[namePrev],
+      nextLineView: null,
     };
 
-    this._view.items[namePrev]._next = this._view.items[name];
+    this.view.lines[namePrev].nextLineView = this.view.lines[name];
 
-    const handle = this._view.createHandle();
-    this._view.handles.push({
+    const handle = this.view.createHandle();
+    this.view.handles.set(handle, {
       handle: handle,
-      nameFrom: namePrev,
-      nameTo: name,
+      previousLineName: namePrev,
+      nextLineName: name,
     });
 
     return { name, line, handle };
   }
 
-  public createItems = function (items: IItemData[]): IItem | IItem[] {
-    if (items.length === 1) {
-      return this.createSingleItem(items[0].name, items[0].value, items[0].onChange, items[0].color);
-    }
+  public createLines(params: InternalLineInitParams[]): Lines {
+    const singleLine = this.createSingleLine(params[0]);
+    const restLinesWithHandles = params
+      .slice(1)
+      .map(this.createLineWithHandle, this);
 
-    const firstItemData = items[0];
-    const singleLineItem = this.createSingleItem(firstItemData.name, firstItemData.value, firstItemData.onChange, firstItemData.color);
-    const restItems = items.slice(1).map(function (itemData) {
-      return this.createItem(itemData.name, itemData.value, itemData.onChange, itemData.color);
-    }, this);
-
-    return [singleLineItem].concat(restItems);
+    return [singleLine, ...restLinesWithHandles];
   }
 
   public divideSliderIntoEqualParts(): void {
-    const names = Object.keys(this._model.items);
+    const names = Object.keys(this.model.lines);
     const amount = names.length;
-    const diffs = this._model.getEqualParts(amount);
+    const diffs = this.model.getEqualParts(amount);
 
-    names.forEach(function (name, index) {
-      this._model.items[name].value = diffs[index];
-      const onChange = this._view.items[name].onChange;
+    names.forEach(function (this: Controller, name, index) {
+      this.model.lines[name].value = diffs[index];
+      const onChange = this.view.lines[name].onChange;
       onChange(diffs[index], { auto: true });
 
       const aggregate = diffs
         .slice(0, index + 1)
-        .reduce(function (acc, curr) { return acc + curr }, 0);
-      this._view.setLineWidth(name, aggregate);
-
+        .reduce((acc, curr) => acc + curr, 0);
+      this.view.setLineWidth(name, aggregate);
     }, this);
 
-    this._view.handles.forEach(function (handleData) {
-      const item = {
+    this.view.handles.forEach(function (this: Controller, handleData: Handle) {
+      const partialHandleData = {
         handle: handleData.handle,
-        name: handleData.nameTo,
+        name: handleData.nextLineName,
       };
 
-      this.bindHandle(item);
+      this.updateHandlePosition(partialHandleData);
     }, this);
-
   }
 
-  public addItemToSlider(value: number, item: IItem): void {
-    const aggregation = Object.keys(this._model.items).reduce((acc, curr) => {
-      return acc + this._model.items[curr].value;
+  public addLineWithHandleToSlider(value: number, lwh: LineWithHandle): void {
+    const aggregation = Object.keys(this.model.lines).reduce((acc, curr) => {
+      return acc + this.model.lines[curr].value;
     }, 0);
 
-    this._view.setLineWidth(item.name, aggregation);
-    this._view.appendItem(item.handle);
-    this.bindHandle(item);
-    this._view.appendItem(item.line);
+    this.view.setLineWidth(lwh.name, aggregation);
+    this.view.appendElement(lwh.handle);
+    this.updateHandlePosition(lwh);
+    this.view.appendElement(lwh.line);
 
-    this._view.items[item.name].onChange(value);
+    this.view.lines[lwh.name].onChange(value);
   }
 
-  public addItemsToSlider(items: IItem | IItem[]): void {
+  public addLinesToSlider(lines: Lines): void {
+    var singleLine = lines[0];
+    this.view.appendElement(singleLine.line);
+    (lines.slice(1) as LineWithHandle[]).forEach((lwh, index, arr) => {
+      const lineName = lwh.name;
+      const value = this.model.lines[lineName].value;
+      const prevName = arr[index - 1]?.name || singleLine.name;
+      const prevLineWidth = this.view.getLineWidthInPercent(prevName);
 
-    if (!Array.isArray(items)) {
-      this._view.appendItem(items.line);
-      return;
-    }
+      this.view.setLineWidth(lwh.name, value + prevLineWidth);
+      this.view.appendElement(lwh.handle);
+      this.updateHandlePosition(lwh);
+      this.view.appendElement(lwh.line);
 
-    var singleLine = items[0];
-    this._view.appendItem(singleLine.line);
-
-    items.forEach((item, index, arr) => {
-      const isSingleLine = index === 0;
-      if (isSingleLine) {
-        return;
-      }
-
-      const itemName = item.name;
-      const value = this._model.items[itemName].value;
-      const prevName = arr[index - 1].name;
-      const prevLineWidth = this._view.getPercentOf(prevName);
-
-      this._view.setLineWidth(item.name, value + prevLineWidth);
-      this._view.appendItem(item.handle);
-      this.bindHandle(item);
-      this._view.appendItem(item.line);
-
-      this._view.items[itemName].onChange(value);
+      this.view.lines[lineName].onChange(value);
     });
   }
 
-  public addItemToSliderAuto(item: IItem): void {
+  public addLineWithHandleToSliderAuto(lwh: LineWithHandle): void {
     this.divideSliderIntoEqualParts();
-    this._view.appendItem(item.handle);
-    this._view.appendItem(item.line);
+    this.view.appendElement(lwh.handle);
+    this.view.appendElement(lwh.line);
   }
 
-  public addItemToSliderGreedy(item: IItem): void {
-    const emptySpace = this._model.total - this._model.getSumOfItems();
-    this._model.items[item.name].value = emptySpace;
-    this._view.setLineWidth(item.name, this._model.total);
-    this._view.appendItem(item.handle);
-    this.bindHandle(item);
-    this._view.appendItem(item.line);
+  public addLineWithHandleToSliderGreedy(lwh: LineWithHandle): void {
+    const emptySpace = Model.TOTAL - this.model.getSumOfLines();
+    this.model.lines[lwh.name].value = emptySpace;
+    this.view.setLineWidth(lwh.name, Model.TOTAL);
+    this.view.appendElement(lwh.handle);
+    this.updateHandlePosition(lwh);
+    this.view.appendElement(lwh.line);
 
-    this._view.items[item.name].onChange(emptySpace, { auto: true });
+    this.view.lines[lwh.name].onChange(emptySpace, { auto: true });
   }
 
-  public addItemToSliderBySplitLastItem(item: IItem): void {
-    const prevItem = this._view.items[item.name]._previous;
-    const prevItemValue = prevItem && this._model.items[prevItem.name].value || 0;
+  public addLineWithHandleToSliderBySplitLastLine(lwh: LineWithHandle): void {
+    const prevLineView = this.view.lines[lwh.name].previousLineView;
+    const prevLineValue =
+      (prevLineView && this.model.lines[prevLineView.name].value) || 0;
 
-    const prevDividedInto2 = prevItemValue / 2;
-    const newPrevItemValue = Math.floor(prevDividedInto2);
-    const newItemValue = Math.ceil(prevDividedInto2);
+    const prevDividedInto2 = prevLineValue / 2;
+    const newPrevLineValue = Math.floor(prevDividedInto2);
+    const newLineValue = Math.ceil(prevDividedInto2);
 
-    if (prevItem && prevItem.line) {
-      prevItem.line.style.width = parseInt(prevItem.line.style.width || '0') - newItemValue + '%';
+    if (prevLineView && prevLineView.line) {
+      prevLineView.line.style.width =
+        parseInt(prevLineView.line.style.width || '0') - newLineValue + '%';
     }
 
-    this._model.items[item.name].value = newItemValue;
+    this.model.lines[lwh.name].value = newLineValue;
 
-    if (prevItem) {
-      this._model.items[prevItem.name].value = newPrevItemValue;
+    if (prevLineView) {
+      this.model.lines[prevLineView.name].value = newPrevLineValue;
     }
 
-    this.addItemToSlider(newItemValue, item);
+    this.addLineWithHandleToSlider(newLineValue, lwh);
 
-    this._view.items[item.name].onChange(newItemValue);
-    prevItem && this._view.items[prevItem.name].onChange(newPrevItemValue);
+    this.view.lines[lwh.name].onChange(newLineValue);
+    prevLineView &&
+      this.view.lines[prevLineView.name].onChange(newPrevLineValue);
   }
 
-  public bindHandle(item: IItem): void {
-    const handle = item.handle;
-    const prevItem = this._view.items[item.name]._previous;
+  public activateDragHandleListener(): void {
+    const updateValues = (
+      handle: HTMLElement,
+      oldHandleLeft: number,
+      newHandleLeft: number
+    ) => {
+      const handleData = this.view.getHandleData(handle);
 
-    handle.style.left = prevItem && Math.round(this._view.getPercentOf(prevItem.name)) + '%' || '1%';
-
-    const updateValues = (oldHandleLeft: number, newHandleLeft: number) => {
-      const handleDataIndex = this._view.handles.findIndex(function (handleData) {
-        return handleData.handle === handle;
-      });
-
-      if (handleDataIndex === -1) {
-        throw new Error("Can't find handle");
-      }
-
-      const handleData = this._view.handles[handleDataIndex];
-
-      const nameFrom = handleData.nameFrom;
-      const nameTo = handleData.nameTo;
+      const previousName = handleData.previousLineName;
+      const nextName = handleData.nextLineName;
 
       // view
-      this._view.setLineWidth(nameFrom, newHandleLeft);
+      this.view.setLineWidth(previousName, newHandleLeft);
 
       // model
       const diff = oldHandleLeft - newHandleLeft;
-      this._model.items[nameFrom].value -= diff;
-      this._model.items[nameTo].value += diff;
+      this.model.lines[previousName].value -= diff;
+      this.model.lines[nextName].value += diff;
 
-      const fromOnChange = this._view.items[nameFrom].onChange;
-      const toOnChange = this._view.items[nameTo].onChange;
+      const fromOnChange = this.view.lines[previousName].onChange;
+      const toOnChange = this.view.lines[nextName].onChange;
 
-      fromOnChange(this._model.items[nameFrom].value);
-      toOnChange(this._model.items[nameTo].value);
-    }
+      fromOnChange(this.model.lines[previousName].value);
+      toOnChange(this.model.lines[nextName].value);
+    };
 
-    this._view.makeHandleMoveable(handle, updateValues);
+    this.view.makeHandleMoveable(updateValues);
   }
 
-  public removeItem(name: string, onRemove: () => void): void {
-    const removingItemModel = this._model.items[name];
-    const removingItemView = this._view.items[name];
+  public removeLine(name: string, onRemove: () => void): void {
+    const removingLineModel = this.model.lines[name];
+    const removingLineView = this.view.lines[name];
 
-    if (!removingItemModel || !removingItemView) {
-      console.warn('Item ' + name + ' not found');
+    if (!removingLineModel || !removingLineView) {
+      console.warn('Line ' + name + ' not found');
       return;
     }
 
-    const isSingleItem = Object.keys(this._model.items).length === 1;
+    const isSingleLine = Object.keys(this.model.lines).length === 1;
 
-    if (isSingleItem) {
-      this._model.items = {};
-      this._view.items = {};
-      this._view.handles = [];
+    if (isSingleLine) {
+      this.model.lines = {};
+      this.view.lines = {};
+      this.view.handles = new Map();
 
-      View.removeElement(removingItemView.line);
+      View.removeElement(removingLineView.line);
 
       onRemove();
 
       return;
     }
 
-    const isLastItem = this._view.getLastItemName() === name;
+    const isLastLine = this.view.getLastLineName() === name;
 
-    if (isLastItem) {
-      const handleData = this._view.findHandleDataByToLineName(name);
-      const line = removingItemView.line;
-      const prevItemName = handleData && handleData.nameFrom;
-      const valueTo = removingItemModel.value;
+    if (isLastLine) {
+      const handleData = this.view.findHandleDataByToLineName(name);
+      const line = removingLineView.line;
+      const prevLineName = handleData && handleData.previousLineName;
+      const valueTo = removingLineModel.value;
 
-      if (!prevItemName) {
-        throw new Error('Unexpected behavior during remove last item');
+      if (!prevLineName) {
+        throw new Error('Unexpected behavior during remove last line');
       }
 
-      this._view.items[prevItemName]._next = null;
-      this._model.items[prevItemName].value += valueTo;
+      this.view.lines[prevLineName].nextLineView = null;
+      this.model.lines[prevLineName].value += valueTo;
 
-      this._view.setLineWidth(prevItemName, this._model.total);
-      this._view.items[prevItemName].onChange(this._model.items[prevItemName].value, { auto: true });
+      this.view.setLineWidth(prevLineName, Model.TOTAL);
+      this.view.lines[prevLineName].onChange(
+        this.model.lines[prevLineName].value,
+        { auto: true }
+      );
 
       if (handleData) {
         View.removeElement(handleData.handle);
-        this._view.removeFromHandles(handleData.handle);
+        this.view.removePreviousHandles(handleData.handle);
       }
 
       View.removeElement(line);
 
-      delete this._model.items[name];
-      delete this._view.items[name];
+      delete this.model.lines[name];
+      delete this.view.lines[name];
 
       onRemove();
 
@@ -307,53 +295,62 @@ export default class Controller {
     }
 
     // Generic case
-    const handleData = this._view.findHandleDataByFromLineName(name);
-    const nextItemName = handleData && handleData.nameTo;
-    const removingItemValue = removingItemModel.value;
-    const line = removingItemView.line;
+    const handleData = this.view.findHandleDataByFromLineName(name);
+    const nextLineName = handleData && handleData.nextLineName;
+    const removingLineValue = removingLineModel.value;
+    const line = removingLineView.line;
 
-    if (!nextItemName) {
-      throw new Error('Unexpected behavior during remove item');
+    if (!nextLineName) {
+      throw new Error('Unexpected behavior during remove line');
     }
 
-    this._model.items[nextItemName].value += removingItemValue;
-    this._view.items[nextItemName]._previous = removingItemView._previous;
+    this.model.lines[nextLineName].value += removingLineValue;
+    this.view.lines[nextLineName].previousLineView =
+      removingLineView.previousLineView;
 
-    const isFirstItem = removingItemView._previous === null;
+    const isFirstLine = removingLineView.previousLineView === null;
 
-    if (!isFirstItem) {
-      if (removingItemView._previous) {
-        removingItemView._previous._next = removingItemView._next;
+    if (!isFirstLine && removingLineView.previousLineView) {
+        removingLineView.previousLineView.name = removingLineView.name;
       }
     }
 
     const updateHandles = () => {
-      if (isLastItem) {
+      if (isLastLine) {
         return;
       }
 
-      const leftHandleData = this._view.findHandleDataByToLineName(name);
-      const rightHandleData = this._view.findHandleDataByFromLineName(name);
+      const leftHandleData = this.view.findHandleDataByToLineName(name);
+      const rightHandleData = this.view.findHandleDataByFromLineName(name);
 
       if (leftHandleData && rightHandleData) {
-        leftHandleData.nameTo = rightHandleData.nameTo;
+        leftHandleData.nextLineName = rightHandleData.nextLineName;
       }
-    }
+    };
 
     updateHandles();
 
-    this._view.items[nextItemName].onChange(this._model.items[nextItemName].value);
+    this.view.lines[nextLineName].onChange(
+      this.model.lines[nextLineName].value
+    );
 
     if (handleData) {
-      this._view.removeFromHandles(handleData.handle);
+      this.view.removePreviousHandles(handleData.handle);
       View.removeElement(handleData.handle);
     }
     View.removeElement(line);
 
-    delete this._model.items[name];
-    delete this._view.items[name];
+    delete this.model.lines[name];
+    delete this.view.lines[name];
 
     onRemove();
+  }
 
+  private updateHandlePosition({ handle, name }: Omit<LineWithHandle, 'line'>) {
+    const prevLineView = this.view.lines[name].previousLineView;
+    handle.style.left =
+      (prevLineView &&
+        Math.round(this.view.getLineWidthInPercent(prevLineView.name)) + '%') ||
+      '1%';
   }
 }

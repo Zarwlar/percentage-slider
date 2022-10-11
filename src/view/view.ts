@@ -1,69 +1,45 @@
-import { IMakeHandleMovable } from './makeMoveable';
-import { TOnChange } from '../';
+import { MakeHandleMoveable } from './makeMoveable';
 import './styles.scss';
 
-interface IHandle {
+export interface Handle {
   handle: HTMLElement;
-  nameFrom: string;
-  nameTo: string;
+  previousLineName: string;
+  nextLineName: string;
 }
 
-export interface IItemView {
+export interface LineView {
   name: string;
   line: HTMLElement;
-  onChange: TOnChange;
-  _next: null | IItemView;
-  _previous: null | IItemView;
+  onChange: OnChange;
+  nextLineView: null | LineView;
+  previousLineView: null | LineView;
 }
 
-export type TItems = {
-  [name: string]: IItemView;
-}
+export type LineViewMap = {
+  [name: string]: LineView;
+};
 
+export type OnChange = (ids: number, params?: { auto: boolean }) => void;
 
 export default class View {
-  public static ids: number = 0;
-
-  public static createSlider(): HTMLElement {
-    var slider = document.createElement('div');
-    slider.classList.add('slider');
-    slider.setAttribute('name', 'slider_' + ++View.ids);
-    return slider;
-  }
-
-  public static getRandomColor(): string {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  }
-
-  public static removeElement(item: HTMLElement): void {
-    if (!item.parentNode) { return; }
-
-    item.parentNode.removeChild(item);
-  }
-
-  public makeHandleMoveableCls: IMakeHandleMovable;
-  public node: HTMLElement;
-  public slider: HTMLElement;
-  public items: TItems;
-  public handles: IHandle[];
-
-  public constructor(node: HTMLElement, makeHandleMoveable: IMakeHandleMovable) {
+  public constructor(node: HTMLElement) {
     this.node = node;
-    this.slider = View.createSlider();
-    this.items = {};
-    this.handles = [];
-    this.makeHandleMoveableCls = makeHandleMoveable;
+    this.slider = this.createSlider();
+    this.lines = {};
+    this.handles = new Map();
+    this.sliderMovement = new MakeHandleMoveable(this);
 
     this.node.appendChild(this.slider);
   }
 
-  public removeFromHandles(handle: HTMLElement): void {
-    this.handles = this.handles.filter((handleData) => handleData.handle !== handle);
+  public sliderMovement: MakeHandleMoveable;
+  public node: HTMLElement;
+  public slider: HTMLElement;
+  public lines: LineViewMap;
+  public handles: Map<HTMLElement, Handle>;
+
+  public removePreviousHandles(handle: HTMLElement): void {
+    this.handles.delete(handle);
   }
 
   public createLine(name: string, color: string): HTMLElement {
@@ -80,44 +56,45 @@ export default class View {
     const handle = document.createElement('div');
 
     handle.classList.add('handle');
+    handle.setAttribute('data-handle', 'handle');
 
     return handle;
   }
 
-  public appendItem(item: HTMLElement): void {
-    this.slider.insertBefore(item, this.slider.firstChild);
+  public appendElement(el: HTMLElement): void {
+    this.slider.insertBefore(el, this.slider.firstChild);
   }
 
   public setLineWidth(name: string, value: number): void {
-    this.items[name].line.style.width = `${value}%`;
+    this.lines[name].line.style.width = `${value}%`;
+    this.lines[name].line.setAttribute('data-value', String(value));
   }
 
-  public getLastItemName(): string {
-    const namesPrev = Object
-      .keys(this.items)
-      .filter(item => this.items[item]._next === null, this);
+  public getLastLineName(): string {
+    const namesPrev = Object.keys(this.lines).filter(
+      (lineView) => this.lines[lineView].nextLineView === null,
+      this
+    );
 
     if (namesPrev.length !== 1) {
-      throw new Error('Error when trying to find last item');
+      throw new Error('Error during try to find last line name');
     }
 
     return namesPrev[0];
   }
 
-  public getHandleData(handle: HTMLElement): IHandle {
-    const handleIndex = this.handles.findIndex(
-      handleData => handleData.handle === handle
-    );
+  public getHandleData(handle: HTMLElement): Handle {
+    const handleData = this.handles.get(handle);
 
-    if (handleIndex === -1) {
+    if (!handleData) {
       throw new Error('Error when trying to find handle');
     }
 
-    return this.handles[handleIndex];
+    return handleData;
   }
 
-  public getPercentOf(name: string): number {
-    const particularLineWidth = this.items[name].line.offsetWidth;
+  public getLineWidthInPercent(name: string): number {
+    const particularLineWidth = this.lines[name].line.offsetWidth;
     return this.convertToPercent(particularLineWidth);
   }
 
@@ -126,29 +103,52 @@ export default class View {
     return (value * 100) / totalPercent;
   }
 
-  public findHandleDataByToLineName(name: string): null | IHandle {
-    const handleIndex = this.handles.findIndex(handle => {
-      return handle.nameTo === name;
-    });
+  public findHandleDataByToLineName(name: string): null | Handle {
+    const r = Array.from(this.handles.values()).find(
+      (c) => c.nextLineName === name
+    );
 
-    return handleIndex === -1 ? null : this.handles[handleIndex];
+    return r ? r : null;
   }
 
-  public findHandleDataByFromLineName(name: string): null | IHandle {
-    const handleIndex = this.handles.findIndex(handle => {
-      return handle.nameFrom === name;
-    });
+  public findHandleDataByFromLineName(name: string): null | Handle {
+    const r = Array.from(this.handles.values()).find(
+      (c) => c.previousLineName === name
+    );
 
-    return handleIndex === -1 ? null : this.handles[handleIndex];
+    return r ? r : null;
   }
 
-  public makeHandleMoveable(handle: HTMLElement, updateValues: (a: number, b: number) => void): void {
-    this.makeHandleMoveableCls.makeHandleMoveable(handle, updateValues);
+  public makeHandleMoveable(
+    updateValues: (handle: HTMLElement, a: number, b: number) => void
+  ): void {
+    this.sliderMovement.makeHandleMoveable(updateValues);
   }
 
-  public calculateZIndexForExtraLeftCase(handle: HTMLElement): void {
-    const index = this.handles.findIndex((handleData) => handleData.handle === handle);
+  private createSlider(): HTMLElement {
+    var slider = document.createElement('div');
+    slider.classList.add('slider');
+    slider.setAttribute('name', 'slider_' + View.sliderId);
+    View.sliderId = View.sliderId++;
+    return slider;
+  }
 
-    handle.style.zIndex = String(index);
+  public static sliderId: number = 0;
+
+  public static getRandomColor(): string {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
+  public static removeElement(el: HTMLElement): void {
+    if (!el.parentNode) {
+      return;
+    }
+
+    el.parentNode.removeChild(el);
   }
 }

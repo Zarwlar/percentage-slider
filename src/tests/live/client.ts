@@ -2,107 +2,118 @@ import PercentageSlider from '../../index';
 import './client.css';
 
 const node = document.getElementById('slider-root')!;
-const addItemBtn = document.getElementById('add-item-btn')!;
-const addSetOfItemsBtn = document.getElementById('add-set-of-items')!;
-const itemNameInput = document.getElementById('item-name-input')! as HTMLInputElement;
-const itemValueInput = document.getElementById('item-value-input')! as HTMLInputElement;
-const itemsList = document.getElementById('items-list')!;
+const addSliderButton = document.getElementById('add-slider-button')!;
+const addSetOfSlidersButton = document.getElementById('add-set-of-sliders')!;
+const sliderNameInput = document.getElementById(
+  'slider-name-input'
+)! as HTMLInputElement;
+const sliderValueInput = document.getElementById(
+  'slider-value-input'
+)! as HTMLInputElement;
+const listOfValueView = document.getElementById('list-of-value-value')!;
 
 const slider = new PercentageSlider(node);
 
-addItemBtn.addEventListener('click', function () {
-  const name = itemNameInput.value;
-  const value = parseInt(itemValueInput.value, 10);
+addSliderButton.addEventListener('click', function () {
+  const name = sliderNameInput.value;
+  const value = parseInt(sliderValueInput.value, 10);
   const color = getRandomColor();
 
-  const fragment = createSegmentValueView(name, value, color);
-  const valueFragment = fragment.querySelector('.item-value')!;
+  const valueView = createSegmentValueView({ name, value, color });
+  const valueFragment = valueView.querySelector('.line-value')!;
   const onChange = (value: number) => {
     valueFragment.textContent = value + '%';
   };
 
-  const itemData = { name, value, color, onChange };
-  const result = slider.addItem(itemData);
+  const line = { name, value, color, onChange };
+  const result = slider.addLine(line);
 
   if (!result.success) {
-    return console.error(result.error);
+    alert(result.error);
   } else {
-    itemsList.appendChild(fragment);
+    listOfValueView.appendChild(valueView);
+    document.querySelector('.quick-demo')?.remove();
+    sliderNameInput.value = '';
+    sliderValueInput.value = '';
   }
 });
 
-addSetOfItemsBtn.addEventListener('click', function () {
-  addSetOfItemsBtn.remove();
+addSetOfSlidersButton.addEventListener('click', function () {
+  addSetOfSlidersButton.remove();
 
-  const itemsData = [
-    { name: 'Apples', value: 15, onChange: undefined, color: 'rgb(61, 91, 100)' },
-    { name: 'Bananas', value: 60, onChange: undefined, color: 'rgb(186, 29, 127)' },
-    { name: 'Oranges', value: 15, onChange: undefined, color: 'rgb(57, 126, 143)' },
-    { name: 'Avocados', value: 1, onChange: undefined, color: 'rgb(152, 170, 177)' },
+  const demoData = [
+    { name: 'Apples', value: 25, onChange: undefined, color: '#dad7cd' },
+    { name: 'Bananas', value: 25, onChange: undefined, color: '#a3b18a' },
+    { name: 'Oranges', value: 25, onChange: undefined, color: '#588157' },
+    { name: 'Avocados', value: 25, onChange: undefined, color: '#3a5a40' },
   ];
 
-  const valueFragments = itemsData.map(item => {
-    return createSegmentValueView(item.name, item.value, item.color);
-  }).map(fragment => {
-    return fragment.querySelector('.item-value')!;
+  const demoViewData = demoData.map(createSegmentValueView);
+
+  demoViewData.forEach((fragment) => listOfValueView.appendChild(fragment));
+
+  const valueFragments = demoViewData.map((fragment) => {
+    return fragment.querySelector('.line-value')!;
   });
 
-  const onChanges = valueFragments.map(valueFragment => {
+  const onChanges = valueFragments.map((valueFragment) => {
     return (value: number) => {
       valueFragment.textContent = value + '%';
-    }
+    };
   });
 
-  const withOnChangeItemsData = itemsData.map((item, index) => {
+  const withOnChangedemoData = demoData.map((line, index) => {
     return {
-      ...item,
+      ...line,
       onChange: onChanges[index],
     };
   });
 
-  slider.addItems(withOnChangeItemsData, {
-    force: true,
-  });
-
+  slider.addLines(withOnChangedemoData);
 });
 
-function createSegmentValueView(name: string, value: number, color: string) {
+function createSegmentValueView(params: {
+  name: string;
+  value: number;
+  color: string;
+}) {
+  const { name, value, color } = params;
   const fragment = document.createElement('div');
-  fragment.classList.add(name);
-  fragment.classList.add('item-view');
+  fragment.classList.add('line-view');
   fragment.style.backgroundColor = color;
 
   const dataContainer = document.createElement('div');
   dataContainer.classList.add('data-container');
 
-  const removeItemContainer = document.createElement('div');
-  removeItemContainer.classList.add('remove-item-container');
+  const removeLineContainer = document.createElement('div');
+  removeLineContainer.classList.add('remove-line-container');
 
   const removeButton = document.createElement('button');
-  removeButton.textContent = `Remove item`;
+  removeButton.textContent = `Remove line`;
+  removeButton.classList.add('btn');
   removeButton.classList.add('btn_remove');
 
   removeButton.addEventListener('click', function () {
-    slider.removeItem(name, () => {
+    slider.removeLine(name, () => {
       fragment.remove();
     });
   });
 
-  removeItemContainer.appendChild(removeButton);
+  removeLineContainer.appendChild(removeButton);
 
   const nameFragment = document.createElement('span');
-  nameFragment.classList.add('item-name');
+  nameFragment.classList.add('line-name');
   nameFragment.textContent = name;
 
   const valueFragment = document.createElement('span');
-  valueFragment.classList.add('item-value');
+  valueFragment.classList.add('line-value');
   valueFragment.textContent = String(value);
 
   dataContainer.appendChild(nameFragment);
   dataContainer.appendChild(valueFragment);
 
   fragment.appendChild(dataContainer);
-  fragment.appendChild(removeItemContainer);
+  fragment.appendChild(removeLineContainer);
 
   return fragment;
 }

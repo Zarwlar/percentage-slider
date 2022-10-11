@@ -1,0 +1,34 @@
+.slider {
+  background: #e0e0e0;
+  background: linear-gradient(left top, #e0e0e0, #eee);
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;
+  position: relative;
+}
+
+.slider > :first-child {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.line {
+  height: 15px;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  position: absolute;
+}
+
+.handle {
+  width: 8px;
+  height: 25px;
+  cursor: pointer;
+  background: #a9a9a9;
+  border: 1px dotted #fff;
+  border-radius: 5px;
+  position: absolute;
+  top: -5px;
+  box-shadow: 0 0 3px #fff;
+}
+
+/*# sourceMappingURL=index.css.map */
