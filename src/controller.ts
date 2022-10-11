@@ -310,8 +310,7 @@ export default class Controller {
 
     const isFirstLine = removingLineView.previousLineView === null;
 
-    if (!isFirstLine) {
-      if (removingLineView.previousLineView) {
+    if (!isFirstLine && removingLineView.previousLineView) {
         removingLineView.previousLineView.name = removingLineView.name;
       }
     }
