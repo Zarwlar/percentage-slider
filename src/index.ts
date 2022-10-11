@@ -119,7 +119,7 @@ export default class PercentageSlider {
     if (linesDataSum > Model.TOTAL) {
       return {
         success: false,
-        error: `Sum of lines can not be great than ${Model.TOTAL}.`,
+        error: `Sum of lines can not be greater than ${Model.TOTAL}.`,
       };
     }
 
